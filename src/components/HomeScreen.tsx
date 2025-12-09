@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Settings, Users, Star, Trophy } from 'lucide-react';
-import type { Database } from '../lib/database.types';
-
-type Child = Database['public']['Tables']['children']['Row'];
-type Task = Database['public']['Tables']['tasks']['Row'];
+import type { Child, Task } from '../lib/api';
 
 interface ChildWithProgress extends Child {
   progress: number;
@@ -31,48 +28,37 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   }
 
   async function loadChildrenWithProgress() {
-    const { data: childrenData } = await supabase
-      .from('children')
-      .select('*')
-      .order('created_at', { ascending: true });
+    try {
+      const childrenData = await api.getChildren();
+      const tasksData = await api.getTasks();
+      const weekStart = getWeekStart();
 
-    if (!childrenData) return;
+      const childrenWithProgress = await Promise.all(
+        childrenData.map(async (child) => {
+          const completionsData = await api.getTaskCompletions(child.id, weekStart);
+          const totalTarget = tasksData.reduce((sum, task) => sum + task.target_count, 0);
 
-    const { data: tasksData } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('is_active', true);
+          if (totalTarget === 0) {
+            return { ...child, progress: 0 };
+          }
 
-    const weekStart = getWeekStart();
+          const totalCompleted = completionsData.reduce(
+            (sum, completion) => {
+              const task = tasksData.find((t) => t.id === completion.task_id);
+              return sum + Math.min(completion.completion_count, task?.target_count || 0);
+            },
+            0
+          );
 
-    const childrenWithProgress = await Promise.all(
-      childrenData.map(async (child) => {
-        const { data: completionsData } = await supabase
-          .from('task_completions')
-          .select('*')
-          .eq('child_id', child.id)
-          .gte('week_start_date', weekStart);
+          const progress = Math.round((totalCompleted / totalTarget) * 100);
+          return { ...child, progress };
+        })
+      );
 
-        const totalTarget = (tasksData || []).reduce((sum, task) => sum + task.target_count, 0);
-
-        if (totalTarget === 0) {
-          return { ...child, progress: 0 };
-        }
-
-        const totalCompleted = (completionsData || []).reduce(
-          (sum, completion) => {
-            const task = (tasksData || []).find((t) => t.id === completion.task_id);
-            return sum + Math.min(completion.completion_count, task?.target_count || 0);
-          },
-          0
-        );
-
-        const progress = Math.round((totalCompleted / totalTarget) * 100);
-        return { ...child, progress };
-      })
-    );
-
-    setChildren(childrenWithProgress);
+      setChildren(childrenWithProgress);
+    } catch (error) {
+      console.error('Failed to load children with progress', error);
+    }
   }
 
   return (

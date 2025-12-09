@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { HomeScreen } from './components/HomeScreen';
 import { ChildView } from './components/ChildView';
 import { AdminView } from './components/AdminView';
-import type { Database } from './lib/database.types';
+import type { Child } from './lib/api';
 
-type Child = Database['public']['Tables']['children']['Row'];
 type View = 'home' | 'child' | 'admin';
 
 function App() {
