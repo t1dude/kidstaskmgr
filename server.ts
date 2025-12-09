@@ -123,6 +123,47 @@ app.post('/api/tasks', (req, res) => {
   }
 });
 
+app.put('/api/tasks/:id', (req, res) => {
+  try {
+    const { title, description, target_count, icon, is_active } = req.body;
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (title !== undefined) {
+      updates.push('title = ?');
+      values.push(title);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      values.push(description);
+    }
+    if (target_count !== undefined) {
+      updates.push('target_count = ?');
+      values.push(target_count);
+    }
+    if (icon !== undefined) {
+      updates.push('icon = ?');
+      values.push(icon);
+    }
+    if (is_active !== undefined) {
+      updates.push('is_active = ?');
+      values.push(is_active ? 1 : 0);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+
+    values.push(req.params.id);
+    db.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+});
+
 app.delete('/api/tasks/:id', (req, res) => {
   try {
     db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);

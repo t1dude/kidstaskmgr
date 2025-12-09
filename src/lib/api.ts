@@ -60,6 +60,15 @@ export const api = {
     return response.json();
   },
 
+  async updateTask(id: string, data: Partial<Omit<Task, 'id' | 'created_at'>>): Promise<Task> {
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
   async deleteTask(id: string): Promise<void> {
     await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
   },

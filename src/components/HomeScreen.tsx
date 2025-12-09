@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { Settings, Users, Star, Trophy } from 'lucide-react';
-import type { Child, Task } from '../lib/api';
+import type { Child } from '../lib/api';
 
 interface ChildWithProgress extends Child {
   progress: number;

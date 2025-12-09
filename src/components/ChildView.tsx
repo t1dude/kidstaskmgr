@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { CheckCircle, Star, Trophy, Sparkles } from 'lucide-react';
-import type { Task, Child, TaskCompletion } from '../lib/api';
+import type { Task, Child } from '../lib/api';
 
 interface ChildViewProps {
   child: Child;

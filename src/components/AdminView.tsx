@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Settings, Users } from 'lucide-react';
+import { Plus, Trash2, Settings, Edit, Check, X } from 'lucide-react';
 import type { Task, Child } from '../lib/api';
 
 interface AdminViewProps {
@@ -13,6 +13,8 @@ export function AdminView({ onBack }: AdminViewProps) {
   const [newTask, setNewTask] = useState({ title: '', target_count: 1, icon: 'check-circle' });
   const [newChild, setNewChild] = useState({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
   const [activeTab, setActiveTab] = useState<'tasks' | 'children'>('tasks');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskCount, setEditingTaskCount] = useState<number>(1);
 
   useEffect(() => {
     loadTasks();
@@ -85,6 +87,26 @@ export function AdminView({ onBack }: AdminViewProps) {
       loadChildren();
     } catch (error) {
       console.error('Failed to delete child', error);
+    }
+  }
+
+  function startEditingTask(task: Task) {
+    setEditingTaskId(task.id);
+    setEditingTaskCount(task.target_count);
+  }
+
+  function cancelEditingTask() {
+    setEditingTaskId(null);
+    setEditingTaskCount(1);
+  }
+
+  async function saveTaskEdit(taskId: string) {
+    try {
+      await api.updateTask(taskId, { target_count: editingTaskCount });
+      setEditingTaskId(null);
+      loadTasks();
+    } catch (error) {
+      console.error('Failed to update task', error);
     }
   }
 
@@ -175,16 +197,60 @@ export function AdminView({ onBack }: AdminViewProps) {
                     key={task.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-semibold text-gray-800">{task.title}</h4>
-                      <p className="text-sm text-gray-600">{task.target_count}x per uke</p>
+                      {editingTaskId === task.id ? (
+                        <div className="flex items-center gap-2 mt-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={editingTaskCount}
+                            onChange={(e) => setEditingTaskCount(parseInt(e.target.value) || 1)}
+                            className="w-20 px-3 py-1 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <span className="text-sm text-gray-600">ganger per uke</span>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-600">{task.target_count}x per uke</p>
+                      )}
                     </div>
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex gap-2">
+                      {editingTaskId === task.id ? (
+                        <>
+                          <button
+                            onClick={() => saveTaskEdit(task.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Lagre"
+                          >
+                            <Check className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={cancelEditingTask}
+                            className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                            title="Avbryt"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEditingTask(task)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Rediger antall"
+                          >
+                            <Edit className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => deleteTask(task.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Slett"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
