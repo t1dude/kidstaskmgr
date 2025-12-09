@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import ical from 'node-ical';
 
 dotenv.config();
 
@@ -254,7 +255,7 @@ app.get('/api/calendar-settings', async (req, res) => {
 
 app.put('/api/calendar-settings', async (req, res) => {
   try {
-    const { calendar_id, api_key } = req.body;
+    const { ical_url } = req.body;
 
     const { data: existing } = await supabase
       .from('calendar_settings')
@@ -264,7 +265,7 @@ app.put('/api/calendar-settings', async (req, res) => {
     if (existing) {
       const { data, error } = await supabase
         .from('calendar_settings')
-        .update({ calendar_id, api_key, updated_at: new Date().toISOString() })
+        .update({ ical_url, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
         .select()
         .single();
@@ -274,7 +275,7 @@ app.put('/api/calendar-settings', async (req, res) => {
     } else {
       const { data, error } = await supabase
         .from('calendar_settings')
-        .insert({ calendar_id, api_key })
+        .insert({ ical_url })
         .select()
         .single();
 
@@ -293,34 +294,43 @@ app.get('/api/calendar-events', async (req, res) => {
       .select('*')
       .maybeSingle();
 
-    if (!settings || !settings.calendar_id || !settings.api_key) {
+    if (!settings || !settings.ical_url) {
       return res.json([]);
     }
+
+    const events = await ical.async.fromURL(settings.ical_url);
 
     const now = new Date();
-    const timeMin = now.toISOString();
-    const timeMax = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(settings.calendar_id)}/events?key=${settings.api_key}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=10`;
+    const upcomingEvents = Object.values(events)
+      .filter((event: any) => event.type === 'VEVENT')
+      .map((event: any) => {
+        const start = event.start;
+        const end = event.end;
 
-    const response = await fetch(url);
+        return {
+          id: event.uid || Math.random().toString(36).substr(2, 9),
+          summary: event.summary || 'Uten tittel',
+          start: start instanceof Date ? start.toISOString() : start,
+          end: end instanceof Date ? end.toISOString() : end,
+          description: event.description || '',
+          rawStart: start,
+        };
+      })
+      .filter((event: any) => {
+        const eventStart = event.rawStart instanceof Date ? event.rawStart : new Date(event.rawStart);
+        return eventStart >= now && eventStart <= twoWeeksFromNow;
+      })
+      .sort((a: any, b: any) => {
+        const aStart = a.rawStart instanceof Date ? a.rawStart : new Date(a.rawStart);
+        const bStart = b.rawStart instanceof Date ? b.rawStart : new Date(b.rawStart);
+        return aStart.getTime() - bStart.getTime();
+      })
+      .slice(0, 10)
+      .map(({ rawStart, ...event }: any) => event);
 
-    if (!response.ok) {
-      console.error('Google Calendar API error:', await response.text());
-      return res.json([]);
-    }
-
-    const data = await response.json();
-
-    const events = (data.items || []).map((event: any) => ({
-      id: event.id,
-      summary: event.summary || 'Uten tittel',
-      start: event.start?.dateTime || event.start?.date,
-      end: event.end?.dateTime || event.end?.date,
-      description: event.description,
-    }));
-
-    res.json(events);
+    res.json(upcomingEvents);
   } catch (error) {
     console.error('Failed to fetch calendar events:', error);
     res.json([]);

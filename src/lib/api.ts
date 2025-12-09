@@ -29,8 +29,7 @@ export interface TaskCompletion {
 
 export interface CalendarSettings {
   id: string;
-  calendar_id: string;
-  api_key: string;
+  ical_url: string;
   created_at: string;
   updated_at: string;
 }
@@ -116,7 +115,7 @@ export const api = {
     return response.json();
   },
 
-  async updateCalendarSettings(data: { calendar_id: string; api_key: string }): Promise<CalendarSettings> {
+  async updateCalendarSettings(data: { ical_url: string }): Promise<CalendarSettings> {
     const response = await fetch(`${API_URL}/calendar-settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

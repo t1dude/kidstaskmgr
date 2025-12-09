@@ -15,7 +15,7 @@ export function AdminView({ onBack }: AdminViewProps) {
   const [activeTab, setActiveTab] = useState<'tasks' | 'children' | 'calendar'>('tasks');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskCount, setEditingTaskCount] = useState<number>(1);
-  const [calendarSettings, setCalendarSettings] = useState({ calendar_id: '', api_key: '' });
+  const [calendarSettings, setCalendarSettings] = useState({ ical_url: '' });
 
   useEffect(() => {
     loadTasks();
@@ -127,7 +127,7 @@ export function AdminView({ onBack }: AdminViewProps) {
     try {
       const data = await api.getCalendarSettings();
       if (data) {
-        setCalendarSettings({ calendar_id: data.calendar_id, api_key: data.api_key });
+        setCalendarSettings({ ical_url: data.ical_url });
       }
     } catch (error) {
       console.error('Failed to load calendar settings', error);
@@ -355,40 +355,27 @@ export function AdminView({ onBack }: AdminViewProps) {
           {activeTab === 'calendar' && (
             <div>
               <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-3">Google Kalender Innstillinger</h3>
+                <h3 className="font-semibold text-gray-700 mb-3">Kalender Innstillinger</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  For å vise kalenderhendelser, trenger du en Google Calendar ID og en API-nøkkel.
+                  Lim inn den hemmelige iCal-adressen fra kalenderen din. Dette fungerer med Google Calendar, Outlook, Apple Calendar og andre.
                 </p>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Kalender ID
+                      iCal URL (Hemmelig adresse)
                     </label>
                     <input
                       type="text"
-                      placeholder="eks: familienavn@group.calendar.google.com"
-                      value={calendarSettings.calendar_id}
-                      onChange={(e) => setCalendarSettings({ ...calendarSettings, calendar_id: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="https://calendar.google.com/calendar/ical/..."
+                      value={calendarSettings.ical_url}
+                      onChange={(e) => setCalendarSettings({ ...calendarSettings, ical_url: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Finn denne i Google Calendar innstillinger → Kalender innstillinger → Kalender-ID
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Google API-nøkkel
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Din Google API-nøkkel"
-                      value={calendarSettings.api_key}
-                      onChange={(e) => setCalendarSettings({ ...calendarSettings, api_key: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Opprett en API-nøkkel i Google Cloud Console med Calendar API aktivert
-                    </p>
+                    <div className="text-xs text-gray-500 mt-2 space-y-1">
+                      <p className="font-semibold">Slik finner du iCal-adressen:</p>
+                      <p><strong>Google Calendar:</strong> Kalenderinnstillinger → Integrer kalender → Hemmelig adresse i iCal-format</p>
+                      <p><strong>Outlook:</strong> Kalenderinnstillinger → Delte kalendere → Publiser en kalender → ICS-format</p>
+                    </div>
                   </div>
                   <button
                     onClick={saveCalendarSettings}
