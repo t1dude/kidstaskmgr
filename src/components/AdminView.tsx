@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Plus, Trash2, Settings, Users } from 'lucide-react';
-import type { Database } from '../lib/database.types';
-
-type Task = Database['public']['Tables']['tasks']['Row'];
-type Child = Database['public']['Tables']['children']['Row'];
+import type { Task, Child } from '../lib/api';
 
 interface AdminViewProps {
   onBack: () => void;
@@ -23,69 +20,82 @@ export function AdminView({ onBack }: AdminViewProps) {
   }, []);
 
   async function loadTasks() {
-    const { data } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (data) setTasks(data);
+    try {
+      const data = await api.getTasks();
+      setTasks(data);
+    } catch (error) {
+      console.error('Failed to load tasks', error);
+    }
   }
 
   async function loadChildren() {
-    const { data } = await supabase
-      .from('children')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (data) setChildren(data);
+    try {
+      const data = await api.getChildren();
+      setChildren(data);
+    } catch (error) {
+      console.error('Failed to load children', error);
+    }
   }
 
   async function addTask() {
     if (!newTask.title.trim()) return;
 
-    const { error } = await supabase.from('tasks').insert([{
-      title: newTask.title,
-      target_count: newTask.target_count,
-      icon: newTask.icon,
-      is_active: true
-    }]);
-
-    if (!error) {
+    try {
+      await api.createTask({
+        title: newTask.title,
+        target_count: newTask.target_count,
+        icon: newTask.icon,
+        description: ''
+      });
       setNewTask({ title: '', target_count: 1, icon: 'check-circle' });
       loadTasks();
+    } catch (error) {
+      console.error('Failed to add task', error);
     }
   }
 
   async function deleteTask(id: string) {
-    await supabase.from('tasks').delete().eq('id', id);
-    loadTasks();
+    try {
+      await api.deleteTask(id);
+      loadTasks();
+    } catch (error) {
+      console.error('Failed to delete task', error);
+    }
   }
 
   async function addChild() {
     if (!newChild.name.trim()) return;
 
-    const { error } = await supabase.from('children').insert([{
-      name: newChild.name,
-      color: newChild.color,
-      avatar_emoji: newChild.avatar_emoji
-    }]);
-
-    if (!error) {
+    try {
+      await api.createChild({
+        name: newChild.name,
+        color: newChild.color,
+        avatar_emoji: newChild.avatar_emoji
+      });
       setNewChild({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
       loadChildren();
+    } catch (error) {
+      console.error('Failed to add child', error);
     }
   }
 
   async function deleteChild(id: string) {
-    await supabase.from('children').delete().eq('id', id);
-    loadChildren();
+    try {
+      await api.deleteChild(id);
+      loadChildren();
+    } catch (error) {
+      console.error('Failed to delete child', error);
+    }
   }
 
   async function resetWeek() {
     if (!confirm('Er du sikker på at du vil nullstille alle oppgaver for denne uken?')) return;
 
-    const { error } = await supabase.from('task_completions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
-    if (!error) {
+    try {
+      await api.resetWeek();
       alert('Uken er nullstilt!');
+    } catch (error) {
+      console.error('Failed to reset week', error);
     }
   }
 

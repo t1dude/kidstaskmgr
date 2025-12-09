@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { CheckCircle, Star, Trophy, Sparkles } from 'lucide-react';
-import type { Database } from '../lib/database.types';
-
-type Task = Database['public']['Tables']['tasks']['Row'];
-type Child = Database['public']['Tables']['children']['Row'];
-type TaskCompletion = Database['public']['Tables']['task_completions']['Row'];
+import type { Task, Child, TaskCompletion } from '../lib/api';
 
 interface ChildViewProps {
   child: Child;
@@ -26,34 +22,25 @@ export function ChildView({ child, onBack }: ChildViewProps) {
   }, [child.id]);
 
   async function loadTasks() {
-    const { data: tasksData } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: true });
+    try {
+      const tasksData = await api.getTasks();
+      const completionsData = await api.getTaskCompletions(child.id, getWeekStart());
 
-    if (!tasksData) return;
+      const completionsMap = new Map<string, number>();
+      completionsData.forEach((c) => {
+        completionsMap.set(c.task_id, c.completion_count);
+      });
 
-    const today = new Date().toISOString().split('T')[0];
+      const tasksWithCompletions = tasksData.map((task) => ({
+        ...task,
+        completion_count: completionsMap.get(task.id) || 0,
+      }));
 
-    const { data: completionsData } = await supabase
-      .from('task_completions')
-      .select('*')
-      .eq('child_id', child.id)
-      .gte('week_start_date', getWeekStart());
-
-    const completionsMap = new Map<string, number>();
-    completionsData?.forEach((c) => {
-      completionsMap.set(c.task_id, c.completion_count);
-    });
-
-    const tasksWithCompletions = tasksData.map((task) => ({
-      ...task,
-      completion_count: completionsMap.get(task.id) || 0,
-    }));
-
-    setTasks(tasksWithCompletions);
-    calculateProgress(tasksWithCompletions);
+      setTasks(tasksWithCompletions);
+      calculateProgress(tasksWithCompletions);
+    } catch (error) {
+      console.error('Failed to load tasks', error);
+    }
   }
 
   function getWeekStart() {
@@ -81,67 +68,56 @@ export function ChildView({ child, onBack }: ChildViewProps) {
   }
 
   async function incrementTask(task: TaskWithCompletion) {
-    const weekStart = getWeekStart();
+    try {
+      const weekStart = getWeekStart();
+      const newCount = task.completion_count + 1;
 
-    const { data: existing } = await supabase
-      .from('task_completions')
-      .select('*')
-      .eq('child_id', child.id)
-      .eq('task_id', task.id)
-      .eq('week_start_date', weekStart)
-      .maybeSingle();
-
-    const newCount = (existing?.completion_count || 0) + 1;
-
-    if (existing) {
-      await supabase
-        .from('task_completions')
-        .update({ completion_count: newCount, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-    } else {
-      await supabase.from('task_completions').insert({
+      await api.upsertTaskCompletion({
         child_id: child.id,
         task_id: task.id,
         completion_count: newCount,
         week_start_date: weekStart,
       });
-    }
 
-    if (newCount === task.target_count) {
-      setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 2000);
-    }
+      if (newCount === task.target_count) {
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 2000);
+      }
 
-    loadTasks();
+      loadTasks();
+    } catch (error) {
+      console.error('Failed to increment task', error);
+    }
   }
 
   async function decrementTask(task: TaskWithCompletion) {
     if (task.completion_count === 0) return;
 
-    const weekStart = getWeekStart();
+    try {
+      const weekStart = getWeekStart();
+      const newCount = task.completion_count - 1;
 
-    const { data: existing } = await supabase
-      .from('task_completions')
-      .select('*')
-      .eq('child_id', child.id)
-      .eq('task_id', task.id)
-      .eq('week_start_date', weekStart)
-      .maybeSingle();
+      if (newCount === 0) {
+        const completionsData = await api.getTaskCompletions(child.id, weekStart);
+        const existing = completionsData.find(
+          (c) => c.task_id === task.id && c.week_start_date === weekStart
+        );
+        if (existing) {
+          await api.deleteTaskCompletion(existing.id);
+        }
+      } else {
+        await api.upsertTaskCompletion({
+          child_id: child.id,
+          task_id: task.id,
+          completion_count: newCount,
+          week_start_date: weekStart,
+        });
+      }
 
-    if (!existing) return;
-
-    const newCount = existing.completion_count - 1;
-
-    if (newCount === 0) {
-      await supabase.from('task_completions').delete().eq('id', existing.id);
-    } else {
-      await supabase
-        .from('task_completions')
-        .update({ completion_count: newCount, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
+      loadTasks();
+    } catch (error) {
+      console.error('Failed to decrement task', error);
     }
-
-    loadTasks();
   }
 
   return (
