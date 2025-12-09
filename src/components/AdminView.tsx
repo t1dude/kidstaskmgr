@@ -12,13 +12,15 @@ export function AdminView({ onBack }: AdminViewProps) {
   const [children, setChildren] = useState<Child[]>([]);
   const [newTask, setNewTask] = useState({ title: '', target_count: 1, icon: 'check-circle' });
   const [newChild, setNewChild] = useState({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
-  const [activeTab, setActiveTab] = useState<'tasks' | 'children'>('tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'children' | 'calendar'>('tasks');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskCount, setEditingTaskCount] = useState<number>(1);
+  const [calendarSettings, setCalendarSettings] = useState({ calendar_id: '', api_key: '' });
 
   useEffect(() => {
     loadTasks();
     loadChildren();
+    loadCalendarSettings();
   }, []);
 
   async function loadTasks() {
@@ -121,6 +123,27 @@ export function AdminView({ onBack }: AdminViewProps) {
     }
   }
 
+  async function loadCalendarSettings() {
+    try {
+      const data = await api.getCalendarSettings();
+      if (data) {
+        setCalendarSettings({ calendar_id: data.calendar_id, api_key: data.api_key });
+      }
+    } catch (error) {
+      console.error('Failed to load calendar settings', error);
+    }
+  }
+
+  async function saveCalendarSettings() {
+    try {
+      await api.updateCalendarSettings(calendarSettings);
+      alert('Kalenderinnstillinger lagret!');
+    } catch (error) {
+      console.error('Failed to save calendar settings', error);
+      alert('Kunne ikke lagre kalenderinnstillinger');
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
       <div className="max-w-4xl mx-auto">
@@ -158,6 +181,16 @@ export function AdminView({ onBack }: AdminViewProps) {
               }`}
             >
               Barn
+            </button>
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'calendar'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Kalender
             </button>
           </div>
 
@@ -315,6 +348,55 @@ export function AdminView({ onBack }: AdminViewProps) {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'calendar' && (
+            <div>
+              <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+                <h3 className="font-semibold text-gray-700 mb-3">Google Kalender Innstillinger</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  For å vise kalenderhendelser, trenger du en Google Calendar ID og en API-nøkkel.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Kalender ID
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="eks: familienavn@group.calendar.google.com"
+                      value={calendarSettings.calendar_id}
+                      onChange={(e) => setCalendarSettings({ ...calendarSettings, calendar_id: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Finn denne i Google Calendar innstillinger → Kalender innstillinger → Kalender-ID
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Google API-nøkkel
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Din Google API-nøkkel"
+                      value={calendarSettings.api_key}
+                      onChange={(e) => setCalendarSettings({ ...calendarSettings, api_key: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Opprett en API-nøkkel i Google Cloud Console med Calendar API aktivert
+                    </p>
+                  </div>
+                  <button
+                    onClick={saveCalendarSettings}
+                    className="w-full px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Lagre innstillinger
+                  </button>
+                </div>
               </div>
             </div>
           )}

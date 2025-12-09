@@ -12,8 +12,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
     "better-sqlite3": "^9.2.2",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",

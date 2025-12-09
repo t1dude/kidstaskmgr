@@ -3,6 +3,10 @@ import cors from 'cors';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -12,6 +16,11 @@ const dbPath = path.join(__dirname, 'tasks.db');
 const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.VITE_SUPABASE_ANON_KEY!
+);
 
 app.use(cors());
 app.use(express.json());
@@ -226,6 +235,95 @@ app.delete('/api/reset-week', (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reset week' });
+  }
+});
+
+app.get('/api/calendar-settings', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('calendar_settings')
+      .select('*')
+      .maybeSingle();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch calendar settings' });
+  }
+});
+
+app.put('/api/calendar-settings', async (req, res) => {
+  try {
+    const { calendar_id, api_key } = req.body;
+
+    const { data: existing } = await supabase
+      .from('calendar_settings')
+      .select('*')
+      .maybeSingle();
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from('calendar_settings')
+        .update({ calendar_id, api_key, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      res.json(data);
+    } else {
+      const { data, error } = await supabase
+        .from('calendar_settings')
+        .insert({ calendar_id, api_key })
+        .select()
+        .single();
+
+      if (error) throw error;
+      res.json(data);
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update calendar settings' });
+  }
+});
+
+app.get('/api/calendar-events', async (req, res) => {
+  try {
+    const { data: settings } = await supabase
+      .from('calendar_settings')
+      .select('*')
+      .maybeSingle();
+
+    if (!settings || !settings.calendar_id || !settings.api_key) {
+      return res.json([]);
+    }
+
+    const now = new Date();
+    const timeMin = now.toISOString();
+    const timeMax = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(settings.calendar_id)}/events?key=${settings.api_key}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=10`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error('Google Calendar API error:', await response.text());
+      return res.json([]);
+    }
+
+    const data = await response.json();
+
+    const events = (data.items || []).map((event: any) => ({
+      id: event.id,
+      summary: event.summary || 'Uten tittel',
+      start: event.start?.dateTime || event.start?.date,
+      end: event.end?.dateTime || event.end?.date,
+      description: event.description,
+    }));
+
+    res.json(events);
+  } catch (error) {
+    console.error('Failed to fetch calendar events:', error);
+    res.json([]);
   }
 });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy } from 'lucide-react';
-import type { Child } from '../lib/api';
+import { Settings, Users, Trophy, Calendar as CalendarIcon } from 'lucide-react';
+import type { Child, CalendarEvent } from '../lib/api';
 
 interface ChildWithProgress extends Child {
   progress: number;
@@ -14,9 +14,11 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [children, setChildren] = useState<ChildWithProgress[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
     loadChildrenWithProgress();
+    loadCalendarEvents();
   }, []);
 
   function getWeekStart() {
@@ -59,6 +61,41 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     } catch (error) {
       console.error('Failed to load children with progress', error);
     }
+  }
+
+  async function loadCalendarEvents() {
+    try {
+      const events = await api.getCalendarEvents();
+      setCalendarEvents(events);
+    } catch (error) {
+      console.error('Failed to load calendar events', error);
+    }
+  }
+
+  function formatEventDate(dateString: string): string {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    if (isToday) return 'I dag';
+    if (isTomorrow) return 'I morgen';
+
+    const weekdays = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'];
+    const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+
+    return `${weekdays[date.getDay()]} ${date.getDate()}. ${months[date.getMonth()]}`;
+  }
+
+  function formatEventTime(dateString: string): string {
+    const date = new Date(dateString);
+    if (dateString.length === 10) {
+      return 'Hele dagen';
+    }
+    return date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
   }
 
   return (
@@ -124,6 +161,32 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             <Users className="w-24 h-24 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-700 mb-2">Ingen barn registrert ennå</h2>
             <p className="text-gray-600 mb-6">Bruk admin-panelet for å legge til barn og oppgaver</p>
+          </div>
+        )}
+
+        {calendarEvents.length > 0 && (
+          <div className="bg-white rounded-2xl p-6 shadow-xl mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <CalendarIcon className="w-7 h-7 text-blue-600" />
+              <h2 className="text-2xl font-bold text-gray-800">Kommende hendelser</h2>
+            </div>
+            <div className="space-y-3">
+              {calendarEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800">{event.summary}</h3>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                      <span>{formatEventDate(event.start)}</span>
+                      <span>•</span>
+                      <span>{formatEventTime(event.start)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

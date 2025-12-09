@@ -27,6 +27,22 @@ export interface TaskCompletion {
   updated_at: string;
 }
 
+export interface CalendarSettings {
+  id: string;
+  calendar_id: string;
+  api_key: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  start: string;
+  end: string;
+  description?: string;
+}
+
 export const api = {
   async getChildren(): Promise<Child[]> {
     const response = await fetch(`${API_URL}/children`);
@@ -93,5 +109,27 @@ export const api = {
 
   async resetWeek(): Promise<void> {
     await fetch(`${API_URL}/reset-week`, { method: 'DELETE' });
+  },
+
+  async getCalendarSettings(): Promise<CalendarSettings | null> {
+    const response = await fetch(`${API_URL}/calendar-settings`);
+    return response.json();
+  },
+
+  async updateCalendarSettings(data: { calendar_id: string; api_key: string }): Promise<CalendarSettings> {
+    const response = await fetch(`${API_URL}/calendar-settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
+  async getCalendarEvents(): Promise<CalendarEvent[]> {
+    const response = await fetch(`${API_URL}/calendar-events`);
+    if (!response.ok) {
+      return [];
+    }
+    return response.json();
   },
 };
