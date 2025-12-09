@@ -121,7 +121,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
       {showCelebration && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="animate-bounce">

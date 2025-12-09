@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Star, Trophy } from 'lucide-react';
+import { Settings, Users, Trophy } from 'lucide-react';
 import type { Child } from '../lib/api';
 
 interface ChildWithProgress extends Child {
@@ -62,23 +62,12 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100 p-4 relative overflow-hidden">
-      <div className="absolute top-10 left-10 animate-bounce">
-        <Star className="w-16 h-16 text-yellow-400 opacity-50" />
-      </div>
-      <div className="absolute bottom-20 right-20 animate-bounce" style={{ animationDelay: '0.5s' }}>
-        <Star className="w-12 h-12 text-pink-400 opacity-50" />
-      </div>
-      <div className="absolute top-40 right-40 animate-bounce" style={{ animationDelay: '1s' }}>
-        <Star className="w-10 h-10 text-purple-400 opacity-50" />
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
       <div className="max-w-4xl mx-auto pt-12">
         <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-gray-800 mb-4 drop-shadow-lg">
-            Oppgaveplanlegger
+          <h1 className="text-6xl font-bold text-gray-800 mb-8 drop-shadow-lg">
+            Ukeoppgaver
           </h1>
-          <p className="text-2xl text-gray-700">Hvem vil logge inn i dag?</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
