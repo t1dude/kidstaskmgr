@@ -19,6 +19,12 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   useEffect(() => {
     loadChildrenWithProgress();
     loadCalendarEvents();
+
+    const calendarInterval = setInterval(() => {
+      loadCalendarEvents();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(calendarInterval);
   }, []);
 
   function getWeekStart() {
@@ -72,7 +78,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     }
   }
 
-  function formatEventDate(dateString: string): string {
+  function getDayLabel(dateString: string): string {
     const date = new Date(dateString);
     const today = new Date();
     const tomorrow = new Date(today);
@@ -84,10 +90,26 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     if (isToday) return 'I dag';
     if (isTomorrow) return 'I morgen';
 
-    const weekdays = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'];
-    const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+    const weekdays = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
+    const months = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
 
     return `${weekdays[date.getDay()]} ${date.getDate()}. ${months[date.getMonth()]}`;
+  }
+
+  function groupEventsByDay(events: CalendarEvent[]): Record<string, CalendarEvent[]> {
+    const grouped: Record<string, CalendarEvent[]> = {};
+
+    events.forEach((event) => {
+      const date = new Date(event.start);
+      const dateKey = date.toDateString();
+
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(event);
+    });
+
+    return grouped;
   }
 
   function formatEventTime(dateString: string): string {
@@ -174,23 +196,30 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
         {calendarEvents.length > 0 && (
           <div className="bg-white rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               <CalendarIcon className="w-7 h-7 text-blue-600" />
               <h2 className="text-2xl font-bold text-gray-800">Kommende hendelser</h2>
             </div>
-            <div className="space-y-3">
-              {calendarEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800">{event.summary}</h3>
-                    <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
-                      <span>{formatEventDate(event.start)}</span>
-                      <span>•</span>
-                      <span>{formatEventTime(event.start)}</span>
-                    </div>
+            <div className="space-y-6">
+              {Object.entries(groupEventsByDay(calendarEvents)).map(([dateKey, events]) => (
+                <div key={dateKey} className="space-y-2">
+                  <h3 className="text-lg font-bold text-gray-700 capitalize border-b-2 border-blue-200 pb-2">
+                    {getDayLabel(events[0].start)}
+                  </h3>
+                  <div className="space-y-2">
+                    {events.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800">{event.summary}</h4>
+                          <div className="text-sm text-gray-600 mt-1">
+                            <span>{formatEventTime(event.start)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

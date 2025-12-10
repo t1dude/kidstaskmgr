@@ -307,13 +307,15 @@ app.get('/api/calendar-events', async (req, res) => {
     const events = await ical.async.fromURL(settings.ical_url);
 
     const now = new Date();
-    const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const upcomingEvents = Object.values(events)
       .filter((event: any) => event.type === 'VEVENT')
       .map((event: any) => {
         const start = event.start;
         const end = event.end;
+        const isAllDay = typeof start === 'string' && start.length === 10;
 
         return {
           id: event.uid || Math.random().toString(36).substr(2, 9),
@@ -322,18 +324,21 @@ app.get('/api/calendar-events', async (req, res) => {
           end: end instanceof Date ? end.toISOString() : end,
           description: event.description || '',
           rawStart: start,
+          isAllDay,
         };
       })
       .filter((event: any) => {
         const eventStart = event.rawStart instanceof Date ? event.rawStart : new Date(event.rawStart);
-        return eventStart >= now && eventStart <= fiveDaysFromNow;
+        const eventEnd = event.end ? (typeof event.end === 'string' ? new Date(event.end) : event.end) : eventStart;
+
+        return (eventStart >= startOfToday || eventEnd >= startOfToday) && eventStart <= sevenDaysFromNow;
       })
       .sort((a: any, b: any) => {
         const aStart = a.rawStart instanceof Date ? a.rawStart : new Date(a.rawStart);
         const bStart = b.rawStart instanceof Date ? b.rawStart : new Date(b.rawStart);
         return aStart.getTime() - bStart.getTime();
       })
-      .map(({ rawStart, ...event }: any) => event);
+      .map(({ rawStart, isAllDay, ...event }: any) => event);
 
     res.json(upcomingEvents);
   } catch (error) {
