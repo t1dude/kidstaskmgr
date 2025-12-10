@@ -307,7 +307,7 @@ app.get('/api/calendar-events', async (req, res) => {
     const events = await ical.async.fromURL(settings.ical_url);
 
     const now = new Date();
-    const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
 
     const upcomingEvents = Object.values(events)
       .filter((event: any) => event.type === 'VEVENT')
@@ -326,14 +326,13 @@ app.get('/api/calendar-events', async (req, res) => {
       })
       .filter((event: any) => {
         const eventStart = event.rawStart instanceof Date ? event.rawStart : new Date(event.rawStart);
-        return eventStart >= now && eventStart <= twoWeeksFromNow;
+        return eventStart >= now && eventStart <= fiveDaysFromNow;
       })
       .sort((a: any, b: any) => {
         const aStart = a.rawStart instanceof Date ? a.rawStart : new Date(a.rawStart);
         const bStart = b.rawStart instanceof Date ? b.rawStart : new Date(b.rawStart);
         return aStart.getTime() - bStart.getTime();
       })
-      .slice(0, 10)
       .map(({ rawStart, ...event }: any) => event);
 
     res.json(upcomingEvents);

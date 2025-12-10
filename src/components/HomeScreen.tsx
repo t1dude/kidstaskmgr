@@ -100,6 +100,14 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
+      <button
+        onClick={onAdminClick}
+        className="fixed top-4 right-4 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 z-10"
+        title="Admin"
+      >
+        <Settings className="w-6 h-6 text-gray-700" />
+      </button>
+
       <div className="max-w-4xl mx-auto pt-12">
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold text-gray-800 mb-8 drop-shadow-lg">
@@ -165,7 +173,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
         )}
 
         {calendarEvents.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-xl mb-6">
+          <div className="bg-white rounded-2xl p-6 shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <CalendarIcon className="w-7 h-7 text-blue-600" />
               <h2 className="text-2xl font-bold text-gray-800">Kommende hendelser</h2>
@@ -189,14 +197,6 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             </div>
           </div>
         )}
-
-        <button
-          onClick={onAdminClick}
-          className="w-full bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
-        >
-          <Settings className="w-8 h-8 text-gray-700" />
-          <span className="text-2xl font-bold text-gray-700">Admin</span>
-        </button>
       </div>
     </div>
   );
