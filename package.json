@@ -9,11 +9,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "setup": "tsx setup.ts"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.87.1",
     "better-sqlite3": "^9.2.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

@@ -1,156 +1,175 @@
 # kidstaskmgr
 
-En oppgavestyringssystem for barn og foreldre.
+En selvdrevet oppgavestyringssystem for barn og foreldre som kjører helt lokalt på din maskin.
 
 ## Funksjoner
 
 - **Barneoversikt**: Barn kan se sine oppgaver, oppnådde oppgaver, og statistikk
 - **Admin-panel**: Foreldre kan administrere oppgaver og følge med på barnas fremgang
 - **Kalenderintegrasjon**: Hendelser fra en delt kalender vises automatisk
-- **Supabase Database**: Alle data lagres sikkert i Supabase
+- **SQLite Database**: Alle data lagres lokalt på din maskin - ingen eksterne tjenester nødvendig
+- **Docker-basert**: Kjør hele applikasjonen i en container uten installasjoner
 
 ## Komme i gang
 
-### Forutsetninger
+### Alternativ 1: Docker (anbefalt)
+
+Dette er den enkleste måten å kjøre applikasjonen uten noen eksterne avhengigheter.
+
+#### Forutsetninger
+
+- Docker Desktop installert på maskinen din
+- Ingen andre tjenester som bruker port 3001 og 4173
+
+#### Start applikasjonen
+
+1. **Bygg og start containeren:**
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Åpne applikasjonen:**
+   - Gå til `http://localhost:4173` i nettleseren din
+   - Appen kjører nå helt lokalt på maskinen din
+
+3. **Stopp applikasjonen:**
+   ```bash
+   docker-compose down
+   ```
+
+#### Data og persistering
+
+- All data lagres i en SQLite-database inne i en Docker volume
+- Data beholdes selv når du stopper og starter containeren
+- For å fjerne all data og starte helt på nytt:
+  ```bash
+  docker-compose down -v
+  ```
+
+### Alternativ 2: Lokal utvikling
+
+Hvis du vil utvikle eller endre koden, kan du kjøre applikasjonen lokalt.
+
+#### Forutsetninger
 
 - Node.js 18 eller nyere
 - npm eller yarn
-- En Supabase-konto (gratis tier er tilstrekkelig)
 
-### Steg 1: Opprett Supabase-prosjekt
+#### Installasjon
 
-1. **Opprett en konto hos Supabase**
-   - Gå til [https://supabase.com](https://supabase.com)
-   - Klikk på "Start your project"
-   - Registrer deg med GitHub, Google, eller e-post
-
-2. **Opprett et nytt prosjekt**
-   - Klikk på "New project" i dashboard
-   - Gi prosjektet et navn (f.eks. "kidstaskmgr")
-   - Sett et sterkt database-passord (lagre dette sikkert!)
-   - Velg en region nærmest deg (f.eks. "West EU (Frankfurt)" for Norge)
-   - Klikk "Create new project"
-   - Vent 1-2 minutter mens databasen settes opp
-
-3. **Hent API-nøkler**
-   - Når prosjektet er klart, gå til "Settings" → "API"
-   - Du vil se følgende informasjon:
-     - **Project URL**: (f.eks. `https://xxxxx.supabase.co`)
-     - **API Keys** → **anon public**: (en lang streng som starter med `eyJ...`)
-   - Disse nøklene trenger du i neste steg
-
-### Steg 2: Konfigurer miljøvariabler
-
-1. **Kopier eksempel-filen**
+1. **Installer avhengigheter:**
    ```bash
-   cp .env .env.local
+   npm install
    ```
 
-2. **Rediger `.env.local` med dine verdier**
-
-   Åpne filen og erstatt med dine verdier fra Supabase:
-   ```
-   VITE_SUPABASE_URL=https://xxxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+2. **Start backend-serveren:**
+   ```bash
+   npm run dev:server
    ```
 
-### Steg 3: Installer avhengigheter
+3. **Start frontend (i et nytt terminalvindu):**
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm install
-```
+4. **Åpne applikasjonen:**
+   - Frontend: `http://localhost:5173`
+   - Backend API: `http://localhost:3001`
 
-### Steg 4: Kjør setup-script
+## Bruk av applikasjonen
 
-Kjør setup-scriptet for å verifisere at alt er konfigurert riktig:
+### Første gangs oppsett
 
-```bash
-npm run setup
-```
+1. **Åpne Admin-panelet**
+   - Klikk på "Admin"-knappen på startsiden
 
-Dette scriptet vil:
-- Sjekke at alle miljøvariabler er satt
-- Teste tilkoblingen til Supabase
-- Verifisere at migrasjonene er kjørt
-- Gi deg klare instruksjoner hvis noe mangler
+2. **Legg til barn**
+   - Klikk "Legg til barn"
+   - Velg navn, emoji-avatar og farge
+   - Gjenta for alle barna i familien
 
-### Steg 5: Kjør migrasjoner
+3. **Opprett oppgaver**
+   - Klikk "Legg til oppgave"
+   - Gi oppgaven et navn og beskrivelse
+   - Sett målantall (hvor mange ganger oppgaven skal utføres i uken)
+   - Velg et ikon
 
-Hvis du ikke har kjørt migrasjonene ennå, må du gjøre det manuelt via Supabase Dashboard:
+### Daglig bruk
 
-1. Gå til Supabase Dashboard → "SQL Editor"
-2. Åpne filen `supabase/migrations/20251208105657_create_task_tracker_schema.sql`
-3. Kopier innholdet og lim det inn i SQL Editor
-4. Klikk "Run"
-5. Gjenta for `supabase/migrations/20251209143008_add_calendar_settings.sql`
-6. Gjenta for `supabase/migrations/20251209144357_update_calendar_settings_to_ical.sql`
+1. **Barn logger inn**
+   - Velg barnets profil fra startsiden
+   - Klikk på oppgavene for å registrere fullføring
+   - Fremdriftslinjer viser ukens status
 
-Alternativt, hvis du har Supabase CLI installert:
-```bash
-supabase db push
-```
+2. **Admin-funksjoner**
+   - Se all statistikk for alle barn
+   - Rediger eller slett oppgaver
+   - Nullstill uken for å starte på nytt
 
-### Steg 6: Start utviklingsserver
+### Kalenderintegrasjon
 
-```bash
-npm run dev
-```
-
-Applikasjonen vil nå kjøre på `http://localhost:5173`
-
-### Steg 7: Opprett første bruker
-
-1. Gå til Supabase Dashboard → "Table Editor" → "users"
-2. Klikk "Insert row"
-3. Fyll inn:
-   - **name**: Barnets navn
-   - **pin_code**: En 4-sifret PIN-kode (f.eks. "1234")
-   - **is_admin**: false (eller true for admin-bruker)
-   - **total_points**: 0
-4. Klikk "Save"
-
-Nå kan du logge inn med navnet og PIN-koden!
+1. **Konfigurer kalender**
+   - Gå til Admin-panelet
+   - Lim inn en iCal-lenke fra Google Calendar, Outlook, eller annen kalendertjeneste
+   - Kalenderhendelser de neste 7 dagene vil vises automatisk på barnas startsider
 
 ## Database
 
-Prosjektet bruker Supabase for datalagring:
+Prosjektet bruker SQLite for all datalagring:
 
-- **tasks**: Oppgaver med beskrivelse, poeng, og status
-- **users**: Brukerinformasjon for barn
-- **completed_tasks**: Historikk over fullførte oppgaver
-- **calendar_settings**: Lagrer iCal kalender-URL
+- **children**: Barneprofiler med navn, farge og avatar
+- **tasks**: Oppgaver med beskrivelse, målantall og ikon
+- **task_completions**: Fullførte oppgaver per barn og uke
+- **calendar_settings**: iCal kalender-URL
 
-### Kalender-URL
-
-Kalender-URL-en lagres i Supabase-tabellen `calendar_settings` i kolonnen `ical_url`. Denne URL-en er en hemmelig iCal-lenke som kan hentes fra Google Calendar, Outlook eller andre kalendertjenester. Admin kan oppdatere denne URL-en gjennom admin-panelet.
+All data lagres lokalt på din maskin - ingen data sendes til eksterne tjenester.
 
 ## Teknologi
 
 - React + TypeScript
 - Vite
 - Tailwind CSS
-- Supabase
-- Express backend for kalenderintegrasjon
+- SQLite (via better-sqlite3)
+- Express backend
+- node-ical for kalenderintegrasjon
+- Docker for enkel deployment
 
 ## Feilsøking
 
-### "Failed to fetch" eller tilkoblingsfeil
+### Port-konflikter
 
-- Sjekk at miljøvariablene i `.env.local` er riktig satt
-- Verifiser at Supabase-prosjektet ditt kjører
-- Sjekk at URL-en ikke har ekstra mellomrom eller tegn
+Hvis du får en feilmelding om at porter er opptatt:
 
-### Migrasjonene kjører ikke
+```bash
+# På Windows
+netstat -ano | findstr :3001
+netstat -ano | findstr :4173
 
-- Logg inn på Supabase Dashboard
-- Gå til "SQL Editor" og kjør migrasjonsfilene manuelt
+# På Mac/Linux
+lsof -i :3001
+lsof -i :4173
+```
 
-### Kan ikke logge inn
+### Containeren starter ikke
 
-- Sjekk at du har opprettet en bruker i `users`-tabellen
-- Verifiser at PIN-koden er riktig
-- Husk at PIN-koder lagres som tekst, ikke tall
+Sjekk loggene:
+```bash
+docker-compose logs -f
+```
+
+### Nullstill alt
+
+For å starte helt på nytt:
+```bash
+docker-compose down -v
+docker system prune -a
+docker-compose up -d --build
+```
 
 ## Bidra
 
 Pull requests er velkomne! For større endringer, vennligst åpne en issue først for å diskutere hva du vil endre.
+
+## Lisens
+
+Dette er et privat prosjekt for familiebruk.

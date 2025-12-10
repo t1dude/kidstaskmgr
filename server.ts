@@ -3,11 +3,7 @@ import cors from 'cors';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
 import ical from 'node-ical';
-
-dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -17,16 +13,6 @@ const dbPath = path.join(__dirname, 'tasks.db');
 const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase credentials:', { supabaseUrl, supabaseKey: supabaseKey ? 'present' : 'missing' });
-  throw new Error('Missing Supabase credentials');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 app.use(cors());
 app.use(express.json());
@@ -61,6 +47,13 @@ function initDatabase() {
       FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE,
       FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
       UNIQUE(child_id, task_id, week_start_date)
+    );
+
+    CREATE TABLE IF NOT EXISTS calendar_settings (
+      id TEXT PRIMARY KEY,
+      ical_url TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE INDEX IF NOT EXISTS idx_task_completions_child_id ON task_completions(child_id);
@@ -244,48 +237,37 @@ app.delete('/api/reset-week', (req, res) => {
   }
 });
 
-app.get('/api/calendar-settings', async (req, res) => {
+app.get('/api/calendar-settings', (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('calendar_settings')
-      .select('*')
-      .maybeSingle();
-
-    if (error) throw error;
-    res.json(data);
+    const settings = db.prepare('SELECT * FROM calendar_settings LIMIT 1').get();
+    res.json(settings || null);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch calendar settings' });
   }
 });
 
-app.put('/api/calendar-settings', async (req, res) => {
+app.put('/api/calendar-settings', (req, res) => {
   try {
     const { ical_url } = req.body;
+    const updated_at = new Date().toISOString();
 
-    const { data: existing } = await supabase
-      .from('calendar_settings')
-      .select('*')
-      .maybeSingle();
+    const existing = db.prepare('SELECT * FROM calendar_settings LIMIT 1').get();
 
     if (existing) {
-      const { data, error } = await supabase
-        .from('calendar_settings')
-        .update({ ical_url, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .select()
-        .single();
+      db.prepare('UPDATE calendar_settings SET ical_url = ?, updated_at = ? WHERE id = ?')
+        .run(ical_url, updated_at, existing.id);
 
-      if (error) throw error;
-      res.json(data);
+      const updated = db.prepare('SELECT * FROM calendar_settings WHERE id = ?').get(existing.id);
+      res.json(updated);
     } else {
-      const { data, error } = await supabase
-        .from('calendar_settings')
-        .insert({ ical_url })
-        .select()
-        .single();
+      const id = generateId();
+      const created_at = new Date().toISOString();
 
-      if (error) throw error;
-      res.json(data);
+      db.prepare('INSERT INTO calendar_settings (id, ical_url, created_at, updated_at) VALUES (?, ?, ?, ?)')
+        .run(id, ical_url, created_at, updated_at);
+
+      const inserted = db.prepare('SELECT * FROM calendar_settings WHERE id = ?').get(id);
+      res.json(inserted);
     }
   } catch (error) {
     console.error('Error updating calendar settings:', error);
@@ -295,10 +277,7 @@ app.put('/api/calendar-settings', async (req, res) => {
 
 app.get('/api/calendar-events', async (req, res) => {
   try {
-    const { data: settings } = await supabase
-      .from('calendar_settings')
-      .select('*')
-      .maybeSingle();
+    const settings = db.prepare('SELECT * FROM calendar_settings LIMIT 1').get();
 
     if (!settings || !settings.ical_url) {
       return res.json([]);
