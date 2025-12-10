@@ -6,9 +6,13 @@ services:
     ports:
       - "3001:3001"
       - "4173:4173"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - VITE_API_URL=http://localhost:3001/api
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     volumes:
       - task-data:/app
     restart: unless-stopped
