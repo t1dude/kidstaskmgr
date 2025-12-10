@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon } from 'lucide-react';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun } from 'lucide-react';
 import type { Child, CalendarEvent } from '../lib/api';
 
 interface ChildWithProgress extends Child {
@@ -15,6 +15,10 @@ interface HomeScreenProps {
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [children, setChildren] = useState<ChildWithProgress[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   useEffect(() => {
     loadChildrenWithProgress();
@@ -26,6 +30,14 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
     return () => clearInterval(calendarInterval);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  function toggleDarkMode() {
+    setDarkMode(!darkMode);
+  }
 
   function getWeekStart() {
     const today = new Date();
@@ -112,27 +124,53 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     return grouped;
   }
 
-  function formatEventTime(dateString: string): string {
-    const date = new Date(dateString);
-    if (dateString.length === 10) {
+  function formatEventTime(startString: string, endString: string): string {
+    if (startString.length === 10) {
       return 'Hele dagen';
     }
-    return date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+    const startDate = new Date(startString);
+    const endDate = new Date(endString);
+    const startTime = startDate.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+    const endTime = endDate.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+    return `${startTime} - ${endTime}`;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
-      <button
-        onClick={onAdminClick}
-        className="fixed top-4 right-4 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 z-10"
-        title="Admin"
-      >
-        <Settings className="w-6 h-6 text-gray-700" />
-      </button>
+    <div className={`min-h-screen p-4 transition-colors duration-300 ${
+      darkMode
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+        : 'bg-gradient-to-br from-slate-100 to-blue-50'
+    }`}>
+      <div className="fixed top-4 right-4 flex gap-2 z-10">
+        <button
+          onClick={toggleDarkMode}
+          className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+            darkMode ? 'bg-gray-700' : 'bg-white'
+          }`}
+          title={darkMode ? 'Lys modus' : 'Mørk modus'}
+        >
+          {darkMode ? (
+            <Sun className="w-6 h-6 text-yellow-400" />
+          ) : (
+            <Moon className="w-6 h-6 text-gray-700" />
+          )}
+        </button>
+        <button
+          onClick={onAdminClick}
+          className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+            darkMode ? 'bg-gray-700' : 'bg-white'
+          }`}
+          title="Admin"
+        >
+          <Settings className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} />
+        </button>
+      </div>
 
       <div className="max-w-4xl mx-auto pt-12">
         <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-gray-800 mb-8 drop-shadow-lg">
+          <h1 className={`text-6xl font-bold mb-8 drop-shadow-lg ${
+            darkMode ? 'text-gray-100' : 'text-gray-800'
+          }`}>
             Ukeoppgaver
           </h1>
         </div>
@@ -142,7 +180,9 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             <button
               key={child.id}
               onClick={() => onSelectChild(child)}
-              className="group relative bg-white rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95"
+              className={`group relative rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95 ${
+                darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}
               style={{
                 borderWidth: 4,
                 borderColor: child.color,
@@ -163,9 +203,11 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                     {child.progress}%
                   </div>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-800">{child.name}</h2>
+                <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  {child.name}
+                </h2>
                 <div className="w-full px-4">
-                  <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div className={`rounded-full h-4 overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -187,36 +229,61 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
         </div>
 
         {children.length === 0 && (
-          <div className="bg-white rounded-3xl p-12 shadow-2xl text-center mb-8">
-            <Users className="w-24 h-24 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-700 mb-2">Ingen barn registrert ennå</h2>
-            <p className="text-gray-600 mb-6">Bruk admin-panelet for å legge til barn og oppgaver</p>
+          <div className={`rounded-3xl p-12 shadow-2xl text-center mb-8 ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <Users className={`w-24 h-24 mx-auto mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+            <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+              Ingen barn registrert ennå
+            </h2>
+            <p className={`mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Bruk admin-panelet for å legge til barn og oppgaver
+            </p>
           </div>
         )}
 
         {calendarEvents.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-xl">
+          <div className={`rounded-2xl p-6 shadow-xl ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <div className="flex items-center gap-3 mb-6">
-              <CalendarIcon className="w-7 h-7 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-800">Kommende hendelser</h2>
+              <CalendarIcon className={`w-7 h-7 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                Kommende hendelser
+              </h2>
             </div>
             <div className="space-y-6">
               {Object.entries(groupEventsByDay(calendarEvents)).map(([dateKey, events]) => (
                 <div key={dateKey} className="space-y-2">
-                  <h3 className="text-lg font-bold text-gray-700 capitalize border-b-2 border-blue-200 pb-2">
+                  <h3 className={`text-lg font-bold capitalize border-b-2 pb-2 ${
+                    darkMode
+                      ? 'text-gray-200 border-blue-500'
+                      : 'text-gray-700 border-blue-200'
+                  }`}>
                     {getDayLabel(events[0].start)}
                   </h3>
                   <div className="space-y-2">
                     {events.map((event) => (
                       <div
                         key={event.id}
-                        className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                        className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                          darkMode
+                            ? 'bg-gray-700 hover:bg-gray-600'
+                            : 'bg-blue-50 hover:bg-blue-100'
+                        }`}
                       >
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800">{event.summary}</h4>
-                          <div className="text-sm text-gray-600 mt-1">
-                            <span>{formatEventTime(event.start)}</span>
+                          <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                            {event.summary}
+                          </h4>
+                          <div className={`text-sm mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            <span>{formatEventTime(event.start, event.end)}</span>
                           </div>
+                          {event.location && (
+                            <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              📍 {event.location}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

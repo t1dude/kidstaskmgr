@@ -323,6 +323,7 @@ app.get('/api/calendar-events', async (req, res) => {
           start: start instanceof Date ? start.toISOString() : start,
           end: end instanceof Date ? end.toISOString() : end,
           description: event.description || '',
+          location: event.location || '',
           rawStart: start,
           isAllDay,
         };
@@ -338,7 +339,7 @@ app.get('/api/calendar-events', async (req, res) => {
         const bStart = b.rawStart instanceof Date ? b.rawStart : new Date(b.rawStart);
         return aStart.getTime() - bStart.getTime();
       })
-      .map(({ rawStart, isAllDay, ...event }: any) => event);
+      .map(({ rawStart, ...event }: any) => event);
 
     res.json(upcomingEvents);
   } catch (error) {

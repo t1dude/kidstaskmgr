@@ -40,6 +40,7 @@ export interface CalendarEvent {
   start: string;
   end: string;
   description?: string;
+  location?: string;
 }
 
 export const api = {
