@@ -121,6 +121,9 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      throw new Error('Failed to update calendar settings');
+    }
     return response.json();
   },
 

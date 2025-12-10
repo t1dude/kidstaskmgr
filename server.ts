@@ -18,10 +18,15 @@ const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase credentials:', { supabaseUrl, supabaseKey: supabaseKey ? 'present' : 'missing' });
+  throw new Error('Missing Supabase credentials');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 app.use(cors());
 app.use(express.json());
@@ -283,6 +288,7 @@ app.put('/api/calendar-settings', async (req, res) => {
       res.json(data);
     }
   } catch (error) {
+    console.error('Error updating calendar settings:', error);
     res.status(500).json({ error: 'Failed to update calendar settings' });
   }
 });
