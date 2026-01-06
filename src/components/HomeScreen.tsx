@@ -64,8 +64,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
           const totalCompleted = completionsData.reduce(
             (sum, completion) => {
-              const task = tasksData.find((t) => t.id === completion.task_id);
-              return sum + Math.min(completion.completion_count, task?.target_count || 0);
+              return sum + completion.completion_count;
             },
             0
           );

@@ -59,7 +59,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
 
     const totalTarget = tasksData.reduce((sum, task) => sum + task.target_count, 0);
     const totalCompleted = tasksData.reduce(
-      (sum, task) => sum + Math.min(task.completion_count, task.target_count),
+      (sum, task) => sum + task.completion_count,
       0
     );
 
