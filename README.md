@@ -180,6 +180,21 @@ docker-compose up -d --build
 
 ## Versjonshistorikk
 
+### v1.1.1 - Sikkerhetsoppdateringer (2026-02-04)
+
+**Sikkerhet:**
+- Oppdatert alle avhengigheter til nyeste stabile versjoner
+- Fikset alle kjente sikkerhetssårbarheter
+- Kritiske oppdateringer:
+  - Vite: 5.4.8 → 7.3.1 (fikset esbuild sikkerhetshull)
+  - esbuild: Oppdatert til sikker versjon
+  - ESLint: 9.12.0 → 9.39.2 (fikset RegEx DoS-sårbarhet)
+  - better-sqlite3: 9.6.0 → 12.6.2
+  - Tailwind CSS: 3.4.17 → 3.4.19
+  - TypeScript: 5.6.3 → 5.9.3
+  - lucide-react: 0.344.0 → 0.563.0
+- Sikkerhetsstatus: 0 sårbarheter
+
 ### v1.1.0 - Intelligent motivasjonssystem (2026-02-04)
 
 **Nye funksjoner:**
