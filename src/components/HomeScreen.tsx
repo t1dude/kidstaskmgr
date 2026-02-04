@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun } from 'lucide-react';
-import type { Child, CalendarEvent } from '../lib/api';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X } from 'lucide-react';
+import type { Child, CalendarEvent, Task, TaskCompletion } from '../lib/api';
+import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 
 interface ChildWithProgress extends Child {
   progress: number;
+  tips: Tip[];
 }
 
 interface HomeScreenProps {
@@ -15,6 +17,7 @@ interface HomeScreenProps {
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [children, setChildren] = useState<ChildWithProgress[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [selectedChildTips, setSelectedChildTips] = useState<{ child: Child; tips: Tip[] } | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -59,7 +62,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           const totalTarget = tasksData.reduce((sum, task) => sum + task.target_count, 0);
 
           if (totalTarget === 0) {
-            return { ...child, progress: 0 };
+            return { ...child, progress: 0, tips: [] };
           }
 
           const totalCompleted = completionsData.reduce(
@@ -70,7 +73,20 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           );
 
           const progress = Math.round((totalCompleted / totalTarget) * 100);
-          return { ...child, progress };
+
+          const completionsMap = new Map<string, number>();
+          completionsData.forEach((c) => {
+            completionsMap.set(c.task_id, c.completion_count);
+          });
+
+          const tasksWithCompletions: TaskWithCompletion[] = tasksData.map((task) => ({
+            ...task,
+            completion_count: completionsMap.get(task.id) || 0,
+          }));
+
+          const tips = generateTips(tasksWithCompletions, progress);
+
+          return { ...child, progress, tips };
         })
       );
 
@@ -176,54 +192,72 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {children.map((child) => (
-            <button
-              key={child.id}
-              onClick={() => onSelectChild(child)}
-              className={`group relative rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95 ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              }`}
-              style={{
-                borderWidth: 4,
-                borderColor: child.color,
-              }}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div
-                  className="w-32 h-32 rounded-full flex items-center justify-center text-7xl shadow-xl transition-transform group-hover:scale-110 relative"
-                  style={{
-                    backgroundColor: child.color + '20',
-                    borderWidth: 4,
-                    borderColor: child.color,
+            <div key={child.id} className="relative">
+              <button
+                onClick={() => onSelectChild(child)}
+                className={`group relative rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95 w-full ${
+                  darkMode ? 'bg-gray-800' : 'bg-white'
+                }`}
+                style={{
+                  borderWidth: 4,
+                  borderColor: child.color,
+                }}
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div
+                    className="w-32 h-32 rounded-full flex items-center justify-center text-7xl shadow-xl transition-transform group-hover:scale-110 relative"
+                    style={{
+                      backgroundColor: child.color + '20',
+                      borderWidth: 4,
+                      borderColor: child.color,
+                    }}
+                  >
+                    {child.avatar_emoji}
+                    <div className="absolute bottom-0 right-0 bg-yellow-400 rounded-full px-2 py-1 text-sm font-bold text-gray-800 shadow-lg flex items-center gap-1">
+                      <Trophy className="w-4 h-4" />
+                      {child.progress}%
+                    </div>
+                  </div>
+                  <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                    {child.name}
+                  </h2>
+                  <div className="w-full px-4">
+                    <div className={`rounded-full h-4 overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${child.progress}%`,
+                          backgroundColor: child.color,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div
+                    className="px-6 py-2 rounded-full text-white font-semibold"
+                    style={{ backgroundColor: child.color }}
+                  >
+                    Trykk for å starte
+                  </div>
+                </div>
+              </button>
+              {child.tips.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedChildTips({ child, tips: child.tips });
                   }}
+                  className={`absolute top-4 right-4 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+                    darkMode ? 'bg-blue-600' : 'bg-blue-500'
+                  }`}
+                  title="Se tips"
                 >
-                  {child.avatar_emoji}
-                  <div className="absolute bottom-0 right-0 bg-yellow-400 rounded-full px-2 py-1 text-sm font-bold text-gray-800 shadow-lg flex items-center gap-1">
-                    <Trophy className="w-4 h-4" />
-                    {child.progress}%
+                  <MessageCircle className="w-6 h-6 text-white" />
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                    {child.tips.length}
                   </div>
-                </div>
-                <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  {child.name}
-                </h2>
-                <div className="w-full px-4">
-                  <div className={`rounded-full h-4 overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${child.progress}%`,
-                        backgroundColor: child.color,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                <div
-                  className="px-6 py-2 rounded-full text-white font-semibold"
-                  style={{ backgroundColor: child.color }}
-                >
-                  Trykk for å starte
-                </div>
-              </div>
-            </button>
+                </button>
+              )}
+            </div>
           ))}
         </div>
 
@@ -293,6 +327,94 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </div>
         )}
       </div>
+
+      {selectedChildTips && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedChildTips(null)}
+        >
+          <div
+            className={`rounded-3xl p-8 max-w-2xl w-full shadow-2xl ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg"
+                  style={{
+                    backgroundColor: selectedChildTips.child.color + '20',
+                    borderWidth: 3,
+                    borderColor: selectedChildTips.child.color,
+                  }}
+                >
+                  {selectedChildTips.child.avatar_emoji}
+                </div>
+                <div>
+                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                    Tips til {selectedChildTips.child.name}
+                  </h2>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Oppgaver som trenger litt kjærlighet
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedChildTips(null)}
+                className={`rounded-full p-2 transition-colors ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+              >
+                <X className={`w-6 h-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {selectedChildTips.tips.map((tip, index) => (
+                <div
+                  key={tip.taskId}
+                  className={`p-5 rounded-2xl transition-all ${
+                    darkMode
+                      ? 'bg-gray-700'
+                      : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+                  }`}
+                  style={{
+                    borderLeft: `4px solid ${selectedChildTips.child.color}`,
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                      style={{ backgroundColor: selectedChildTips.child.color }}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-lg leading-relaxed ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                        {tip.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedChildTips(null)}
+                className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 active:scale-95"
+                style={{
+                  backgroundColor: selectedChildTips.child.color,
+                  color: 'white',
+                }}
+              >
+                Skjønner!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
