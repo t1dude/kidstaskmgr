@@ -47,6 +47,16 @@ Dette er den enkleste måten å kjøre applikasjonen uten noen eksterne avhengig
   docker-compose down -v
   ```
 
+### Alternativ 3: Cosmos Cloud
+
+For å kjøre applikasjonen på en hjemmeserver med Cosmos Cloud, se detaljert guide i [COSMOS.md](COSMOS.md).
+
+Cosmos gir deg:
+- Automatisk HTTPS og sertifikathåndtering
+- Enkel container-administrasjon via web-UI
+- Integrert backup-løsninger
+- Autentisering og sikkerhet
+
 ### Alternativ 2: Lokal utvikling
 
 Hvis du vil utvikle eller endre koden, kan du kjøre applikasjonen lokalt.

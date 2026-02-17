@@ -7,15 +7,24 @@ import ical from 'node-ical';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
-const dbPath = path.join(__dirname, 'tasks.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'tasks.db');
 const db = new Database(dbPath);
 
 db.pragma('journal_mode = WAL');
 
 app.use(cors());
 app.use(express.json());
+
+app.get('/health', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(500).json({ status: 'unhealthy', error: 'Database connection failed' });
+  }
+});
 
 function initDatabase() {
   db.exec(`
@@ -329,4 +338,6 @@ app.get('/api/calendar-events', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  console.log(`Database path: ${dbPath}`);
+  console.log(`Health check available at http://localhost:${port}/health`);
 });

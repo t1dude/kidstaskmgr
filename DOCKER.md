@@ -7,6 +7,8 @@ This guide will help you run the task tracker application using Docker Desktop w
 - Docker Desktop installed on your machine
 - No other services running on ports 3001 and 4173
 
+**Alternative Deployment**: If you want to run this on a home server using Cosmos Cloud, see [COSMOS.md](COSMOS.md) for detailed instructions.
+
 ## Quick Start
 
 1. **Build and start the container:**
@@ -33,8 +35,9 @@ All data is stored locally in a SQLite database inside the Docker volume, so you
 
 ## Data Persistence
 
-- The database file is stored in a Docker volume named `task-data`
+- The database file (`tasks.db`) is stored in a Docker volume named `task-data` mounted at `/app/data`
 - Data persists even when you stop and restart the container
+- Health checks ensure the database is working correctly
 - To completely reset and remove all data:
   ```bash
   docker-compose down -v
