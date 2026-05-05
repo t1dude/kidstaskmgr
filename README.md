@@ -9,6 +9,7 @@ En selvdrevet oppgavestyringssystem for barn og foreldre som kjører helt lokalt
 - **Admin-panel**: Foreldre kan administrere oppgaver og følge med på barnas fremgang
 - **Kalenderintegrasjon**: Hendelser fra en delt kalender vises automatisk
 - **Middagsplanlegger**: Planlegg ukens middager med automatiske mat-emojier basert på navn
+- **Oppskriftsinspirarsjon**: Søk etter oppskrifter fra matprat.no direkte i appen og legg til i middagslisten
 - **SQLite Database**: Alle data lagres lokalt på din maskin - ingen eksterne tjenester nødvendig
 - **Docker-basert**: Kjør hele applikasjonen i en container uten installasjoner
 
@@ -144,10 +145,17 @@ Hvis du vil utvikle eller endre koden, kan du kjøre applikasjonen lokalt.
    - Skriv inn navn på middager (f.eks. Taco, Pasta bolognese, Laks)
    - Emojier settes automatisk basert på navn: 🌮 🍕 🍝 🐟 🍗 🍔 osv.
 
-2. **Planlegg ukens middager**
+2. **Hent oppskriftsinspirarsjon**
+   - Under måltidslisten, bruk søkefeltet til å søke på ingredienser eller retttype (f.eks. "kylling", "suppe", "grillmat")
+   - Henter oppskrifter direkte fra matprat.no (4000+ oppskrifter, cachet i 24t)
+   - Klikk **Legg til** på et oppskriftskort for å legge det til i middagslisten
+   - Lenker til godt.no, Trines matblogg, Gladkokken, MENY og REMA 1000 for videre inspirasjon
+
+3. **Planlegg ukens middager**
    - På startsiden vises middagsplanen ved siden av kalenderen
    - Velg middag for hver ukedag fra nedtrekkslisten
    - Dagens dag er fremhevet
+   - Middager hentet fra oppskrifter viser et oransje lenke-ikon – trykk for å åpne oppskriften
    - Klikk **blyant-ikonet** (✏️) for å gå direkte til Måltider-innstillingene
 
 ## Database
@@ -206,6 +214,22 @@ docker-compose up -d --build
 ```
 
 ## Versjonshistorikk
+
+### v1.3.0 - Oppskriftsinspirarsjon (2026-05-05)
+
+**Nye funksjoner:**
+- Oppskriftssøk fra matprat.no direkte i Måltider-innstillingene
+- Søk på ingredienser eller retttype – henter fra over 4000 oppskrifter
+- Oppskriftskort med bilde, vanskelighetsgrad og tilberedningstid
+- «Legg til»-knapp per kort legger middag til i listen, med bekreftelse
+- Lenker til godt.no, Trines matblogg, Gladkokken, MENY og REMA 1000
+- Oransje lenke-ikon i ukesplanen på middager lagt til fra oppskrift
+- Trykk på lenke-ikonet for å åpne oppskriften på matprat.no
+
+**Tekniske endringer:**
+- `recipe_url`-kolonne på `meals`-tabellen (automatisk migrering)
+- `/api/meal-inspiration`-endepunkt: laster sitemap fra matprat.no, cacher i 24t, filtrerer på søkeord og henter JSON-LD parallelt
+- Fikset dropdown-alignment i ukesplanen (fast bredde uavhengig av lenke-ikon)
 
 ### v1.2.0 - Middagsplanlegger (2026-05-05)
 
