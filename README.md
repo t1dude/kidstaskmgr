@@ -215,6 +215,13 @@ docker-compose up -d --build
 
 ## Versjonshistorikk
 
+### v1.3.1 - Mørk modus i innstillinger (2026-05-05)
+
+**Forbedringer:**
+- Mørk modus virker nå fullt ut også inne på innstillinger (Admin-panelet)
+- Alle faner (Oppgaver, Barn, Kalender, Måltider) bruker nå korrekte farger i mørk modus
+- Bakgrunner, skjemafelt, knapper, lister og oppskriftskort tilpasser seg temaet
+
 ### v1.3.0 - Oppskriftsinspirarsjon (2026-05-05)
 
 **Nye funksjoner:**

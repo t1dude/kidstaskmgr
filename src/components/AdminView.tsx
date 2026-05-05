@@ -9,6 +9,11 @@ interface AdminViewProps {
 }
 
 export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
+  const [darkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [newTask, setNewTask] = useState({ title: '', target_count: 1, icon: 'check-circle' });
@@ -243,84 +248,74 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
     }
   }
 
+  const inputClass = `w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+    darkMode
+      ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-blue-400'
+      : 'bg-white border-gray-300 text-gray-800 focus:ring-blue-500'
+  }`;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
+    <div className={`min-h-screen p-4 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-100 to-blue-50'}`}>
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div className={`rounded-2xl shadow-xl p-6 mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Settings className="w-8 h-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-800">Administrasjon</h1>
+              <Settings className="w-8 h-8 text-blue-500" />
+              <h1 className={`text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Administrasjon</h1>
             </div>
             <button
               onClick={onBack}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
               Tilbake
             </button>
           </div>
 
           <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => setActiveTab('tasks')}
-              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-                activeTab === 'tasks'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Oppgaver
-            </button>
-            <button
-              onClick={() => setActiveTab('children')}
-              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-                activeTab === 'children'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Barn
-            </button>
-            <button
-              onClick={() => setActiveTab('calendar')}
-              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-                activeTab === 'calendar'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Kalender
-            </button>
-            <button
-              onClick={() => setActiveTab('meals')}
-              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-                activeTab === 'meals'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Måltider
-            </button>
+            {(['tasks', 'children', 'calendar', 'meals'] as const).map((tab) => {
+              const labels = { tasks: 'Oppgaver', children: 'Barn', calendar: 'Kalender', meals: 'Måltider' };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+                    activeTab === tab
+                      ? 'bg-blue-600 text-white'
+                      : darkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {labels[tab]}
+                </button>
+              );
+            })}
           </div>
 
           {activeTab === 'tasks' && (
             <div>
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-3">Legg til ny oppgave</h3>
+              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
+                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Legg til ny oppgave</h3>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
                     placeholder="Oppgavenavn"
                     value={newTask.title}
                     onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
+                    }`}
                   />
                   <input
                     type="number"
                     min="1"
                     value={newTask.target_count}
                     onChange={(e) => setNewTask({ ...newTask, target_count: parseInt(e.target.value) || 1 })}
-                    className="w-20 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-20 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'
+                    }`}
                     title="Antall ganger per uke"
                   />
                   <button
@@ -337,10 +332,12 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                 {tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                   >
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800">{task.title}</h4>
+                      <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{task.title}</h4>
                       {editingTaskId === task.id ? (
                         <div className="flex items-center gap-2 mt-2">
                           <input
@@ -348,12 +345,14 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                             min="1"
                             value={editingTaskCount}
                             onChange={(e) => setEditingTaskCount(parseInt(e.target.value) || 1)}
-                            className="w-20 px-3 py-1 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className={`w-20 px-3 py-1 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                              darkMode ? 'bg-gray-600 text-gray-100' : 'bg-white'
+                            }`}
                           />
-                          <span className="text-sm text-gray-600">ganger per uke</span>
+                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>ganger per uke</span>
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-600">{task.target_count}x per uke</p>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.target_count}x per uke</p>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -361,14 +360,14 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                         <>
                           <button
                             onClick={() => saveTaskEdit(task.id)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            className={`p-2 text-green-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-green-50'}`}
                             title="Lagre"
                           >
                             <Check className="w-5 h-5" />
                           </button>
                           <button
                             onClick={cancelEditingTask}
-                            className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                            className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-gray-400 hover:bg-gray-500' : 'text-gray-600 hover:bg-gray-200'}`}
                             title="Avbryt"
                           >
                             <X className="w-5 h-5" />
@@ -378,14 +377,14 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                         <>
                           <button
                             onClick={() => startEditingTask(task)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className={`p-2 text-blue-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-blue-50'}`}
                             title="Rediger antall"
                           >
                             <Edit className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => deleteTask(task.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className={`p-2 text-red-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}
                             title="Slett"
                           >
                             <Trash2 className="w-5 h-5" />
@@ -401,28 +400,34 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
 
           {activeTab === 'children' && (
             <div>
-              <div className="mb-6 p-4 bg-green-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-3">Legg til barn</h3>
+              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-50'}`}>
+                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Legg til barn</h3>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
                     placeholder="Navn"
                     value={newChild.name}
                     onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
+                    }`}
                   />
                   <input
                     type="text"
                     placeholder="Emoji"
                     value={newChild.avatar_emoji}
                     onChange={(e) => setNewChild({ ...newChild, avatar_emoji: e.target.value })}
-                    className="w-20 px-4 py-2 border border-gray-300 rounded-lg text-center text-2xl"
+                    className={`w-20 px-4 py-2 border rounded-lg text-center text-2xl ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'
+                    }`}
                   />
                   <input
                     type="color"
                     value={newChild.color}
                     onChange={(e) => setNewChild({ ...newChild, color: e.target.value })}
-                    className="w-16 h-11 border border-gray-300 rounded-lg cursor-pointer"
+                    className={`w-16 h-11 border rounded-lg cursor-pointer ${
+                      darkMode ? 'bg-gray-700 border-gray-600' : 'border-gray-300'
+                    }`}
                   />
                   <button
                     onClick={addChild}
@@ -438,7 +443,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                 {children.map((child) => (
                   <div
                     key={child.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -447,11 +454,11 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                       >
                         {child.avatar_emoji}
                       </div>
-                      <h4 className="font-semibold text-gray-800">{child.name}</h4>
+                      <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h4>
                     </div>
                     <button
                       onClick={() => deleteChild(child.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className={`p-2 text-red-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -463,14 +470,14 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
 
           {activeTab === 'calendar' && (
             <div>
-              <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-3">Kalender Innstillinger</h3>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-50'}`}>
+                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Kalender Innstillinger</h3>
+                <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Lim inn den hemmelige iCal-adressen fra kalenderen din. Dette fungerer med Google Calendar, Outlook, Apple Calendar og andre.
                 </p>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       iCal URL (Hemmelig adresse)
                     </label>
                     <input
@@ -478,9 +485,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                       placeholder="https://calendar.google.com/calendar/ical/..."
                       value={calendarSettings.ical_url}
                       onChange={(e) => setCalendarSettings({ ...calendarSettings, ical_url: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                      className={`${inputClass} font-mono text-sm`}
                     />
-                    <div className="text-xs text-gray-500 mt-2 space-y-1">
+                    <div className={`text-xs mt-2 space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       <p className="font-semibold">Slik finner du iCal-adressen:</p>
                       <p><strong>Google Calendar:</strong> Kalenderinnstillinger → Integrer kalender → Hemmelig adresse i iCal-format</p>
                       <p><strong>Outlook:</strong> Kalenderinnstillinger → Delte kalendere → Publiser en kalender → ICS-format</p>
@@ -496,10 +503,11 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
               </div>
             </div>
           )}
+
           {activeTab === 'meals' && (
             <div>
-              <div className="mb-6 p-4 bg-orange-50 rounded-lg">
-                <h3 className="font-semibold text-gray-700 mb-3">Legg til middag</h3>
+              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-orange-900/30' : 'bg-orange-50'}`}>
+                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Legg til middag</h3>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -507,7 +515,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                     value={newMealName}
                     onChange={(e) => setNewMealName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && addMeal()}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                    className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
+                    }`}
                   />
                   <button
                     onClick={addMeal}
@@ -521,19 +531,23 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
 
               <div className="space-y-2">
                 {meals.length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-4">
+                  <p className={`text-sm text-center py-4 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                     Ingen middager lagt til ennå
                   </p>
                 )}
                 {meals.map((meal) => (
                   <div
                     key={meal.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                   >
-                    <span className="font-semibold text-gray-800">{getMealIcon(meal.name)} {meal.name}</span>
+                    <span className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      {getMealIcon(meal.name)} {meal.name}
+                    </span>
                     <button
                       onClick={() => deleteMeal(meal.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className={`p-2 text-red-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}
                       title="Slett"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -546,9 +560,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
               <div className="mt-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Search className="w-5 h-5 text-orange-500" />
-                  <h3 className="font-bold text-gray-800 text-lg">Finn inspirasjon</h3>
+                  <h3 className={`font-bold text-lg ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Finn inspirasjon</h3>
                 </div>
-                <p className="text-sm text-gray-500 mb-3">
+                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   Søk etter ingredienser eller retttype – henter oppskrifter fra matprat.no
                 </p>
                 <div className="flex gap-2 mb-4">
@@ -558,7 +572,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                     value={inspirationQuery}
                     onChange={(e) => setInspirationQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && searchInspiration()}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                    className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
+                    }`}
                   />
                   <button
                     onClick={searchInspiration}
@@ -574,7 +590,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                 </div>
 
                 {inspirationError && (
-                  <p className="text-sm text-red-500 mb-4">{inspirationError}</p>
+                  <p className="text-sm text-red-400 mb-4">{inspirationError}</p>
                 )}
 
                 {inspirationResults.length > 0 && (
@@ -585,9 +601,11 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                         return (
                           <div
                             key={recipe.url}
-                            className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                            className={`border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col ${
+                              darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'
+                            }`}
                           >
-                            <div className="h-32 bg-gray-100 overflow-hidden">
+                            <div className={`h-32 overflow-hidden ${darkMode ? 'bg-gray-600' : 'bg-gray-100'}`}>
                               {recipe.image ? (
                                 <img
                                   src={recipe.image}
@@ -600,8 +618,10 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                               )}
                             </div>
                             <div className="p-3 flex flex-col flex-1">
-                              <p className="font-semibold text-gray-800 text-sm leading-tight mb-1">{recipe.title}</p>
-                              <div className="text-xs text-gray-500 space-y-0.5 mb-3 flex-1">
+                              <p className={`font-semibold text-sm leading-tight mb-1 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                                {recipe.title}
+                              </p>
+                              <div className={`text-xs space-y-0.5 mb-3 flex-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {recipe.rating && <p>⭐ {recipe.rating}</p>}
                                 {recipe.difficulty && <p>{recipe.difficulty}</p>}
                                 {recipe.time && <p>⏱ {recipe.time}</p>}
@@ -611,7 +631,11 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                                   href={recipe.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                                  className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs border rounded-lg transition-colors ${
+                                    darkMode
+                                      ? 'border-gray-500 text-gray-300 hover:bg-gray-600'
+                                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                                  }`}
                                 >
                                   <ExternalLink className="w-3 h-3" />
                                   Se oppskrift
@@ -621,7 +645,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                                   disabled={isAdded}
                                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
                                     isAdded
-                                      ? 'bg-green-100 text-green-700 cursor-default'
+                                      ? darkMode ? 'bg-green-800/60 text-green-400 cursor-default' : 'bg-green-100 text-green-700 cursor-default'
                                       : 'bg-orange-500 text-white hover:bg-orange-600'
                                   }`}
                                 >
@@ -634,8 +658,8 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                       })}
                     </div>
 
-                    <div className="pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-400 mb-2">Søk videre på:</p>
+                    <div className={`pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <p className={`text-xs mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Søk videre på:</p>
                       <div className="flex flex-wrap gap-2">
                         {externalSites.map((site) => (
                           <a
@@ -643,7 +667,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                             href={site.url(inspirationQuery)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1 text-xs border border-gray-200 rounded-full text-gray-500 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                            className={`inline-flex items-center gap-1 px-3 py-1 text-xs border rounded-full transition-colors hover:text-orange-500 hover:border-orange-400 ${
+                              darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'
+                            }`}
                           >
                             {site.name}
                             <ExternalLink className="w-2.5 h-2.5" />
