@@ -1,6 +1,6 @@
 # kidstaskmgr
 
-En selvdrevet oppgavestyringssystem for barn og foreldre som kjører helt lokalt på din maskin.
+En familieapp for ukeplanlegging som kjører helt lokalt på din maskin.
 
 ## Funksjoner
 
@@ -214,6 +214,12 @@ docker-compose up -d --build
 ```
 
 ## Versjonshistorikk
+
+### v1.4.1 - Mørk modus i barneoversikt og ny tittel (2026-05-05)
+
+**Forbedringer:**
+- Mørk modus virker nå også når man er inne på et barns oppgaveliste
+- Overskriften på forsiden er endret fra «Ukeoppgaver» til «Ukeplan for familien»
 
 ### v1.4.0 - Generelt-fane og funksjonsstyring (2026-05-05)
 

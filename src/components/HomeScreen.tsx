@@ -283,7 +283,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           <h1 className={`text-6xl font-bold mb-8 drop-shadow-lg ${
             darkMode ? 'text-gray-100' : 'text-gray-800'
           }`}>
-            Ukeoppgaver
+            Ukeplan for familien
           </h1>
         </div>
 

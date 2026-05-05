@@ -13,6 +13,10 @@ interface TaskWithCompletion extends Task {
 }
 
 export function ChildView({ child, onBack }: ChildViewProps) {
+  const [darkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [tasks, setTasks] = useState<TaskWithCompletion[]>([]);
   const [totalProgress, setTotalProgress] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -52,38 +56,21 @@ export function ChildView({ child, onBack }: ChildViewProps) {
   }
 
   function calculateProgress(tasksData: TaskWithCompletion[]) {
-    if (tasksData.length === 0) {
-      setTotalProgress(0);
-      return;
-    }
-
+    if (tasksData.length === 0) { setTotalProgress(0); return; }
     const totalTarget = tasksData.reduce((sum, task) => sum + task.target_count, 0);
-    const totalCompleted = tasksData.reduce(
-      (sum, task) => sum + task.completion_count,
-      0
-    );
-
-    const progress = Math.round((totalCompleted / totalTarget) * 100);
-    setTotalProgress(progress);
+    const totalCompleted = tasksData.reduce((sum, task) => sum + task.completion_count, 0);
+    setTotalProgress(Math.round((totalCompleted / totalTarget) * 100));
   }
 
   async function incrementTask(task: TaskWithCompletion) {
     try {
       const weekStart = getWeekStart();
       const newCount = task.completion_count + 1;
-
-      await api.upsertTaskCompletion({
-        child_id: child.id,
-        task_id: task.id,
-        completion_count: newCount,
-        week_start_date: weekStart,
-      });
-
+      await api.upsertTaskCompletion({ child_id: child.id, task_id: task.id, completion_count: newCount, week_start_date: weekStart });
       if (newCount === task.target_count) {
         setShowCelebration(true);
         setTimeout(() => setShowCelebration(false), 2000);
       }
-
       loadTasks();
     } catch (error) {
       console.error('Failed to increment task', error);
@@ -92,36 +79,26 @@ export function ChildView({ child, onBack }: ChildViewProps) {
 
   async function decrementTask(task: TaskWithCompletion) {
     if (task.completion_count === 0) return;
-
     try {
       const weekStart = getWeekStart();
       const newCount = task.completion_count - 1;
-
       if (newCount === 0) {
         const completionsData = await api.getTaskCompletions(child.id, weekStart);
-        const existing = completionsData.find(
-          (c) => c.task_id === task.id && c.week_start_date === weekStart
-        );
-        if (existing) {
-          await api.deleteTaskCompletion(existing.id);
-        }
+        const existing = completionsData.find((c) => c.task_id === task.id && c.week_start_date === weekStart);
+        if (existing) await api.deleteTaskCompletion(existing.id);
       } else {
-        await api.upsertTaskCompletion({
-          child_id: child.id,
-          task_id: task.id,
-          completion_count: newCount,
-          week_start_date: weekStart,
-        });
+        await api.upsertTaskCompletion({ child_id: child.id, task_id: task.id, completion_count: newCount, week_start_date: weekStart });
       }
-
       loadTasks();
     } catch (error) {
       console.error('Failed to decrement task', error);
     }
   }
 
+  const dm = darkMode;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-4">
+    <div className={`min-h-screen p-4 ${dm ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-100 to-blue-50'}`}>
       {showCelebration && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="animate-bounce">
@@ -144,7 +121,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
       )}
 
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 mb-6">
+        <div className={`rounded-3xl shadow-2xl p-6 mb-6 ${dm ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div
@@ -154,13 +131,13 @@ export function ChildView({ child, onBack }: ChildViewProps) {
                 {child.avatar_emoji}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">{child.name}</h1>
-                <p className="text-gray-600">Dine oppgaver for uken</p>
+                <h1 className={`text-3xl font-bold ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h1>
+                <p className={dm ? 'text-gray-400' : 'text-gray-600'}>Dine oppgaver for uken</p>
               </div>
             </div>
             <button
               onClick={onBack}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              className={`px-4 py-2 rounded-lg transition-colors ${dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
               Tilbake
             </button>
@@ -192,33 +169,35 @@ export function ChildView({ child, onBack }: ChildViewProps) {
               return (
                 <div
                   key={task.id}
-                  className={`p-6 rounded-2xl transition-all duration-300 ${
+                  className={`p-6 rounded-2xl transition-all duration-300 border-2 ${
                     isComplete
-                      ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400'
-                      : 'bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200'
+                      ? dm
+                        ? 'bg-green-900/30 border-green-600'
+                        : 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400'
+                      : dm
+                        ? 'bg-gray-700 border-gray-600'
+                        : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      {isComplete && <Sparkles className="w-6 h-6 text-green-600" />}
-                      <h3 className="text-xl font-bold text-gray-800">{task.title}</h3>
+                      {isComplete && <Sparkles className="w-6 h-6 text-green-500" />}
+                      <h3 className={`text-xl font-bold ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{task.title}</h3>
                     </div>
-                    {isComplete && <CheckCircle className="w-8 h-8 text-green-600" />}
+                    {isComplete && <CheckCircle className="w-8 h-8 text-green-500" />}
                   </div>
 
                   <div className="mb-4">
-                    <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                    <div className={`w-full rounded-full h-4 overflow-hidden ${dm ? 'bg-gray-600' : 'bg-gray-200'}`}>
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isComplete ? 'bg-green-500' : 'bg-blue-500'
-                        }`}
+                        className={`h-full rounded-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`}
                         style={{ width: `${Math.min(progress, 100)}%` }}
-                      ></div>
+                      />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-gray-700">
+                    <span className={`text-lg font-semibold ${dm ? 'text-gray-300' : 'text-gray-700'}`}>
                       {task.completion_count} / {task.target_count} ganger
                     </span>
                     <div className="flex gap-2">
@@ -227,7 +206,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
                         disabled={task.completion_count === 0}
                         className={`w-12 h-12 rounded-full text-2xl font-bold transition-all ${
                           task.completion_count === 0
-                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            ? dm ? 'bg-gray-600 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             : 'bg-red-500 text-white hover:bg-red-600 active:scale-95'
                         }`}
                       >
@@ -235,7 +214,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
                       </button>
                       <button
                         onClick={() => incrementTask(task)}
-                        className="w-12 h-12 rounded-full bg-green-500 text-white text-2xl font-bold hover:bg-green-600 active:scale-95 transition-all"
+                        className="w-12 h-12 rounded-full text-white text-2xl font-bold active:scale-95 transition-all"
                         style={{ backgroundColor: child.color }}
                       >
                         +
@@ -247,7 +226,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
             })}
 
             {tasks.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
+              <div className={`text-center py-12 ${dm ? 'text-gray-500' : 'text-gray-500'}`}>
                 <p className="text-xl">Ingen oppgaver ennå!</p>
                 <p className="mt-2">Be voksen om å legge til oppgaver.</p>
               </div>
