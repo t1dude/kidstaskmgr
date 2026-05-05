@@ -46,6 +46,7 @@ export interface CalendarEvent {
 export interface Meal {
   id: string;
   name: string;
+  recipe_url: string | null;
   created_at: string;
 }
 
@@ -163,11 +164,11 @@ export const api = {
     return response.json();
   },
 
-  async createMeal(name: string): Promise<Meal> {
+  async createMeal(name: string, recipeUrl?: string): Promise<Meal> {
     const response = await fetch(`${API_URL}/meals`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, recipe_url: recipeUrl ?? null }),
     });
     return response.json();
   },

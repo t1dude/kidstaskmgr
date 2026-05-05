@@ -68,6 +68,7 @@ function initDatabase() {
     CREATE TABLE IF NOT EXISTS meals (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      recipe_url TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -85,6 +86,9 @@ function initDatabase() {
 }
 
 initDatabase();
+
+// Migrate existing databases: add recipe_url if missing
+try { db.exec('ALTER TABLE meals ADD COLUMN recipe_url TEXT'); } catch { /* already exists */ }
 
 function generateId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -270,12 +274,12 @@ app.get('/api/meals', (req, res) => {
 
 app.post('/api/meals', (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, recipe_url } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: 'Name is required' });
     const id = generateId();
     const created_at = new Date().toISOString();
-    db.prepare('INSERT INTO meals (id, name, created_at) VALUES (?, ?, ?)').run(id, name.trim(), created_at);
-    res.json({ id, name: name.trim(), created_at });
+    db.prepare('INSERT INTO meals (id, name, recipe_url, created_at) VALUES (?, ?, ?, ?)').run(id, name.trim(), recipe_url || null, created_at);
+    res.json({ id, name: name.trim(), recipe_url: recipe_url || null, created_at });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create meal' });
   }

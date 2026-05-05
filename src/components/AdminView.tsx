@@ -204,9 +204,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
     }
   }
 
-  async function addRecipeToMeals(title: string) {
+  async function addRecipeToMeals(title: string, recipeUrl: string) {
     try {
-      await api.createMeal(title);
+      await api.createMeal(title, recipeUrl);
       setAddedRecipes(prev => new Set(prev).add(title));
       loadMeals();
     } catch (error) {
@@ -617,7 +617,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                                   Se oppskrift
                                 </a>
                                 <button
-                                  onClick={() => !isAdded && addRecipeToMeals(recipe.title)}
+                                  onClick={() => !isAdded && addRecipeToMeals(recipe.title, recipe.url)}
                                   disabled={isAdded}
                                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
                                     isAdded

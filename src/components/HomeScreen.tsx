@@ -485,9 +485,24 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                           <option key={meal.id} value={meal.id}>{meal.name}</option>
                         ))}
                       </select>
-                      <span className="text-lg shrink-0 w-7 text-center">
-                        {selectedMeal ? getMealIcon(selectedMeal.name) : ''}
-                      </span>
+                      <div className="shrink-0 w-8 flex items-center justify-center">
+                        {selectedMeal && selectedMeal.recipe_url ? (
+                          <a
+                            href={selectedMeal.recipe_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Se oppskrift på matprat.no"
+                            className={`relative group flex items-center justify-center w-8 h-8 rounded-full text-lg transition-all duration-200 hover:scale-125 active:scale-110 cursor-pointer ${
+                              darkMode ? 'hover:bg-orange-900/50' : 'hover:bg-orange-100'
+                            }`}
+                          >
+                            {getMealIcon(selectedMeal.name)}
+                            <span className="absolute -top-0.5 -right-0.5 text-[9px] leading-none opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                          </a>
+                        ) : selectedMeal ? (
+                          <span className="text-lg">{getMealIcon(selectedMeal.name)}</span>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
