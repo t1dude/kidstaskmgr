@@ -8,6 +8,7 @@ En selvdrevet oppgavestyringssystem for barn og foreldre som kjører helt lokalt
 - **Intelligent motivasjonssystem**: Smart tipssystem som veileder barn gjennom uken
 - **Admin-panel**: Foreldre kan administrere oppgaver og følge med på barnas fremgang
 - **Kalenderintegrasjon**: Hendelser fra en delt kalender vises automatisk
+- **Middagsplanlegger**: Planlegg ukens middager med automatiske mat-emojier basert på navn
 - **SQLite Database**: Alle data lagres lokalt på din maskin - ingen eksterne tjenester nødvendig
 - **Docker-basert**: Kjør hele applikasjonen i en container uten installasjoner
 
@@ -133,7 +134,21 @@ Hvis du vil utvikle eller endre koden, kan du kjøre applikasjonen lokalt.
 1. **Konfigurer kalender**
    - Gå til Admin-panelet
    - Lim inn en iCal-lenke fra Google Calendar, Outlook, eller annen kalendertjeneste
-   - Kalenderhendelser de neste 7 dagene vil vises automatisk på barnas startsider
+   - Kalenderhendelser de neste 7 dagene vil vises automatisk på startsiden
+   - Bruk **oppdater-knappen** (↻) i kalender-panelet for å hente nye hendelser manuelt
+
+### Middagsplanlegger
+
+1. **Legg til middager i listen**
+   - Gå til Admin-panelet → **Måltider**
+   - Skriv inn navn på middager (f.eks. Taco, Pasta bolognese, Laks)
+   - Emojier settes automatisk basert på navn: 🌮 🍕 🍝 🐟 🍗 🍔 osv.
+
+2. **Planlegg ukens middager**
+   - På startsiden vises middagsplanen ved siden av kalenderen
+   - Velg middag for hver ukedag fra nedtrekkslisten
+   - Dagens dag er fremhevet
+   - Klikk **blyant-ikonet** (✏️) for å gå direkte til Måltider-innstillingene
 
 ## Database
 
@@ -143,6 +158,8 @@ Prosjektet bruker SQLite for all datalagring:
 - **tasks**: Oppgaver med beskrivelse, målantall og ikon
 - **task_completions**: Fullførte oppgaver per barn og uke
 - **calendar_settings**: iCal kalender-URL
+- **meals**: Liste over tilgjengelige middager
+- **meal_plan**: Ukesplan med middag per dato
 
 All data lagres lokalt på din maskin - ingen data sendes til eksterne tjenester.
 
@@ -189,6 +206,22 @@ docker-compose up -d --build
 ```
 
 ## Versjonshistorikk
+
+### v1.2.0 - Middagsplanlegger (2026-05-05)
+
+**Nye funksjoner:**
+- Middagsplanlegger på startsiden ved siden av kalenderen (50/50 layout)
+- Legg til og administrer liste over middager under Innstillinger → Måltider
+- Velg middag for hver ukedag direkte fra forsiden
+- Automatiske mat-emojier basert på middagsnavnet (taco 🌮, pizza 🍕, pasta 🍝, fisk 🐟, osv.)
+- Blyant-knapp på middagsplan-panelet tar deg direkte til Måltider-innstillingene
+- Oppdater-knapp på kalender-panelet for manuell refresh med animasjon
+- Dagens dag fremhevet i middagsplanen
+
+**Tekniske endringer:**
+- Nye DB-tabeller: `meals` og `meal_plan`
+- 6 nye API-endepunkter for måltider og ukesplan
+- `initialTab`-prop på AdminView for direktenavigering til spesifikk fane
 
 ### v1.1.1 - Sikkerhetsoppdateringer (2026-02-04)
 
