@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw } from 'lucide-react';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink } from 'lucide-react';
 import type { Child, CalendarEvent, Task, TaskCompletion, Meal } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 
@@ -485,22 +485,26 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                           <option key={meal.id} value={meal.id}>{meal.name}</option>
                         ))}
                       </select>
-                      <div className="shrink-0 w-8 flex items-center justify-center">
-                        {selectedMeal && selectedMeal.recipe_url ? (
-                          <a
-                            href={selectedMeal.recipe_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Se oppskrift på matprat.no"
-                            className={`relative group flex items-center justify-center w-8 h-8 rounded-full text-lg transition-all duration-200 hover:scale-125 active:scale-110 cursor-pointer ${
-                              darkMode ? 'hover:bg-orange-900/50' : 'hover:bg-orange-100'
-                            }`}
-                          >
-                            {getMealIcon(selectedMeal.name)}
-                            <span className="absolute -top-0.5 -right-0.5 text-[9px] leading-none opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
-                          </a>
-                        ) : selectedMeal ? (
-                          <span className="text-lg">{getMealIcon(selectedMeal.name)}</span>
+                      <div className="shrink-0 flex items-center gap-1">
+                        {selectedMeal ? (
+                          <>
+                            <span className="text-lg">{getMealIcon(selectedMeal.name)}</span>
+                            {selectedMeal.recipe_url && (
+                              <a
+                                href={selectedMeal.recipe_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Se oppskrift på matprat.no"
+                                className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors active:scale-95 ${
+                                  darkMode
+                                    ? 'text-orange-400 bg-orange-900/40 hover:bg-orange-800/60'
+                                    : 'text-orange-500 bg-orange-100 hover:bg-orange-200'
+                                }`}
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </>
                         ) : null}
                       </div>
                     </div>
