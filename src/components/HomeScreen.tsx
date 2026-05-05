@@ -486,26 +486,26 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                         ))}
                       </select>
                       <div className="shrink-0 flex items-center gap-1">
-                        {selectedMeal ? (
-                          <>
-                            <span className="text-lg">{getMealIcon(selectedMeal.name)}</span>
-                            {selectedMeal.recipe_url && (
-                              <a
-                                href={selectedMeal.recipe_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="Se oppskrift på matprat.no"
-                                className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors active:scale-95 ${
-                                  darkMode
-                                    ? 'text-orange-400 bg-orange-900/40 hover:bg-orange-800/60'
-                                    : 'text-orange-500 bg-orange-100 hover:bg-orange-200'
-                                }`}
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            )}
-                          </>
-                        ) : null}
+                        <span className="text-lg w-7 text-center">
+                          {selectedMeal ? getMealIcon(selectedMeal.name) : ''}
+                        </span>
+                        {selectedMeal?.recipe_url ? (
+                          <a
+                            href={selectedMeal.recipe_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Se oppskrift på matprat.no"
+                            className={`flex items-center justify-center w-7 h-7 rounded-md active:scale-95 ${
+                              darkMode
+                                ? 'text-orange-400 bg-orange-900/40'
+                                : 'text-orange-500 bg-orange-100'
+                            }`}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        ) : (
+                          <span className="w-7 h-7 shrink-0" />
+                        )}
                       </div>
                     </div>
                   );
