@@ -303,13 +303,24 @@ app.get('/api/calendar-events', async (req, res) => {
       .map((event: any) => {
         const start = event.start;
         const end = event.end;
-        const isAllDay = typeof start === 'string' && start.length === 10;
+        const isAllDay = (start as any)?.dateOnly === true || (typeof start === 'string' && start.length === 10);
+
+        const formatDateOnly = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
 
         return {
           id: event.uid || Math.random().toString(36).substr(2, 9),
           summary: event.summary || 'Uten tittel',
-          start: start instanceof Date ? start.toISOString() : start,
-          end: end instanceof Date ? end.toISOString() : end,
+          start: isAllDay
+            ? (start instanceof Date ? formatDateOnly(start) : start)
+            : (start instanceof Date ? start.toISOString() : start),
+          end: isAllDay
+            ? (end instanceof Date ? formatDateOnly(end) : end)
+            : (end instanceof Date ? end.toISOString() : end),
           description: event.description || '',
           location: event.location || '',
           rawStart: start,
