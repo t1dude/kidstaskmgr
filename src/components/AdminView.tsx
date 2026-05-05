@@ -5,20 +5,37 @@ import type { Task, Child, Meal, RecipeInspiration } from '../lib/api';
 
 interface AdminViewProps {
   onBack: () => void;
-  initialTab?: 'tasks' | 'children' | 'calendar' | 'meals';
+  initialTab?: 'settings' | 'tasks' | 'children' | 'calendar' | 'meals';
 }
 
-export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
-  const [darkMode] = useState(() => {
+
+interface AppFeatures {
+  tasks: boolean;
+  calendar: boolean;
+  meals: boolean;
+}
+
+function getDefaultFeatures(): AppFeatures {
+  try {
+    const saved = localStorage.getItem('appFeatures');
+    return saved ? JSON.parse(saved) : { tasks: true, calendar: true, meals: true };
+  } catch {
+    return { tasks: true, calendar: true, meals: true };
+  }
+}
+
+export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
+  const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
+  const [features, setFeatures] = useState<AppFeatures>(getDefaultFeatures);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [newTask, setNewTask] = useState({ title: '', target_count: 1, icon: 'check-circle' });
   const [newChild, setNewChild] = useState({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
-  const [activeTab, setActiveTab] = useState<'tasks' | 'children' | 'calendar' | 'meals'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'settings' | 'tasks' | 'children' | 'calendar' | 'meals'>(initialTab);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskCount, setEditingTaskCount] = useState<number>(1);
   const [calendarSettings, setCalendarSettings] = useState({ ical_url: '' });
@@ -37,73 +54,50 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
     loadMeals();
   }, []);
 
+  function toggleDarkMode() {
+    const next = !darkMode;
+    setDarkMode(next);
+    localStorage.setItem('darkMode', JSON.stringify(next));
+  }
+
+  function toggleFeature(key: keyof AppFeatures) {
+    const next = { ...features, [key]: !features[key] };
+    setFeatures(next);
+    localStorage.setItem('appFeatures', JSON.stringify(next));
+  }
+
   async function loadTasks() {
-    try {
-      const data = await api.getTasks();
-      setTasks(data);
-    } catch (error) {
-      console.error('Failed to load tasks', error);
-    }
+    try { setTasks(await api.getTasks()); } catch { /* ignore */ }
   }
 
   async function loadChildren() {
-    try {
-      const data = await api.getChildren();
-      setChildren(data);
-    } catch (error) {
-      console.error('Failed to load children', error);
-    }
+    try { setChildren(await api.getChildren()); } catch { /* ignore */ }
   }
 
   async function addTask() {
     if (!newTask.title.trim()) return;
-
     try {
-      await api.createTask({
-        title: newTask.title,
-        target_count: newTask.target_count,
-        icon: newTask.icon,
-        description: ''
-      });
+      await api.createTask({ title: newTask.title, target_count: newTask.target_count, icon: newTask.icon, description: '' });
       setNewTask({ title: '', target_count: 1, icon: 'check-circle' });
       loadTasks();
-    } catch (error) {
-      console.error('Failed to add task', error);
-    }
+    } catch { /* ignore */ }
   }
 
   async function deleteTask(id: string) {
-    try {
-      await api.deleteTask(id);
-      loadTasks();
-    } catch (error) {
-      console.error('Failed to delete task', error);
-    }
+    try { await api.deleteTask(id); loadTasks(); } catch { /* ignore */ }
   }
 
   async function addChild() {
     if (!newChild.name.trim()) return;
-
     try {
-      await api.createChild({
-        name: newChild.name,
-        color: newChild.color,
-        avatar_emoji: newChild.avatar_emoji
-      });
+      await api.createChild({ name: newChild.name, color: newChild.color, avatar_emoji: newChild.avatar_emoji });
       setNewChild({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
       loadChildren();
-    } catch (error) {
-      console.error('Failed to add child', error);
-    }
+    } catch { /* ignore */ }
   }
 
   async function deleteChild(id: string) {
-    try {
-      await api.deleteChild(id);
-      loadChildren();
-    } catch (error) {
-      console.error('Failed to delete child', error);
-    }
+    try { await api.deleteChild(id); loadChildren(); } catch { /* ignore */ }
   }
 
   function startEditingTask(task: Task) {
@@ -121,40 +115,21 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
       await api.updateTask(taskId, { target_count: editingTaskCount });
       setEditingTaskId(null);
       loadTasks();
-    } catch (error) {
-      console.error('Failed to update task', error);
-    }
+    } catch { /* ignore */ }
   }
 
   async function resetWeek() {
     if (!confirm('Er du sikker på at du vil nullstille alle oppgaver for denne uken?')) return;
-
-    try {
-      await api.resetWeek();
-      alert('Uken er nullstilt!');
-    } catch (error) {
-      console.error('Failed to reset week', error);
-    }
+    try { await api.resetWeek(); alert('Uken er nullstilt!'); } catch { /* ignore */ }
   }
 
   async function loadMeals() {
-    try {
-      const data = await api.getMeals();
-      setMeals(data);
-    } catch (error) {
-      console.error('Failed to load meals', error);
-    }
+    try { setMeals(await api.getMeals()); } catch { /* ignore */ }
   }
 
   async function addMeal() {
     if (!newMealName.trim()) return;
-    try {
-      await api.createMeal(newMealName);
-      setNewMealName('');
-      loadMeals();
-    } catch (error) {
-      console.error('Failed to add meal', error);
-    }
+    try { await api.createMeal(newMealName); setNewMealName(''); loadMeals(); } catch { /* ignore */ }
   }
 
   function getMealIcon(name: string): string {
@@ -185,12 +160,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
   }
 
   async function deleteMeal(id: string) {
-    try {
-      await api.deleteMeal(id);
-      loadMeals();
-    } catch (error) {
-      console.error('Failed to delete meal', error);
-    }
+    try { await api.deleteMeal(id); loadMeals(); } catch { /* ignore */ }
   }
 
   async function searchInspiration() {
@@ -214,9 +184,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
       await api.createMeal(title, recipeUrl);
       setAddedRecipes(prev => new Set(prev).add(title));
       loadMeals();
-    } catch (error) {
-      console.error('Failed to add recipe as meal', error);
-    }
+    } catch { /* ignore */ }
   }
 
   const externalSites = [
@@ -230,62 +198,88 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
   async function loadCalendarSettings() {
     try {
       const data = await api.getCalendarSettings();
-      if (data) {
-        setCalendarSettings({ ical_url: data.ical_url });
-      }
-    } catch (error) {
-      console.error('Failed to load calendar settings', error);
-    }
+      if (data) setCalendarSettings({ ical_url: data.ical_url });
+    } catch { /* ignore */ }
   }
 
   async function saveCalendarSettings() {
     try {
       await api.updateCalendarSettings(calendarSettings);
       alert('Kalenderinnstillinger lagret!');
-    } catch (error) {
-      console.error('Failed to save calendar settings', error);
+    } catch {
       alert('Kunne ikke lagre kalenderinnstillinger');
     }
   }
 
-  const inputClass = `w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-    darkMode
-      ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-blue-400'
-      : 'bg-white border-gray-300 text-gray-800 focus:ring-blue-500'
+  // Reusable styles
+  const dm = darkMode;
+  const card = dm ? 'bg-gray-800' : 'bg-white';
+  const sectionBg = (color: string) => dm ? `bg-${color}-900/30` : `bg-${color}-50`;
+  const listItem = dm ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100';
+  const labelText = dm ? 'text-gray-200' : 'text-gray-700';
+  const bodyText = dm ? 'text-gray-100' : 'text-gray-800';
+  const mutedText = dm ? 'text-gray-400' : 'text-gray-500';
+  const inputClass = `px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+    dm ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-blue-400'
+       : 'bg-white border-gray-300 text-gray-800 focus:ring-blue-500'
   }`;
+  const inactiveTab = dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+  const dividerColor = dm ? 'divide-gray-600' : 'divide-gray-100';
+
+  function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
+    return (
+      <button
+        onClick={onToggle}
+        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+          value ? 'bg-blue-500' : dm ? 'bg-gray-600' : 'bg-gray-300'
+        }`}
+        role="switch"
+        aria-checked={value}
+      >
+        <span
+          className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+            value ? 'left-6' : 'left-0.5'
+          }`}
+        />
+      </button>
+    );
+  }
+
+  const featureList: { key: keyof AppFeatures; label: string; desc: string }[] = [
+    { key: 'tasks', label: 'Oppgaveliste', desc: 'Ukentlige oppgaver og fremdrift for barna' },
+    { key: 'calendar', label: 'Kalender', desc: 'Kommende hendelser fra din kalender' },
+    { key: 'meals', label: 'Middagsplanlegging', desc: 'Ukentlig middagsplan på forsiden' },
+  ];
 
   return (
-    <div className={`min-h-screen p-4 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-100 to-blue-50'}`}>
+    <div className={`min-h-screen p-4 ${dm ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-100 to-blue-50'}`}>
       <div className="max-w-4xl mx-auto">
-        <div className={`rounded-2xl shadow-xl p-6 mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`rounded-2xl shadow-xl p-6 mb-6 ${card}`}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Settings className="w-8 h-8 text-blue-500" />
-              <h1 className={`text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Administrasjon</h1>
+              <h1 className={`text-3xl font-bold ${bodyText}`}>Administrasjon</h1>
             </div>
             <button
               onClick={onBack}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
               Tilbake
             </button>
           </div>
 
-          <div className="flex gap-2 mb-6">
-            {(['tasks', 'children', 'calendar', 'meals'] as const).map((tab) => {
-              const labels = { tasks: 'Oppgaver', children: 'Barn', calendar: 'Kalender', meals: 'Måltider' };
+          {/* Tabs */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {(['settings', 'tasks', 'children', 'calendar', 'meals'] as const).map((tab) => {
+              const labels = { settings: 'Generelt', tasks: 'Oppgaver', children: 'Barn', calendar: 'Kalender', meals: 'Måltider' };
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-                    activeTab === tab
-                      ? 'bg-blue-600 text-white'
-                      : darkMode
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition-colors ${
+                    activeTab === tab ? 'bg-blue-600 text-white' : inactiveTab
                   }`}
                 >
                   {labels[tab]}
@@ -294,50 +288,70 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
             })}
           </div>
 
+          {/* Generelt */}
+          {activeTab === 'settings' && (
+            <div className="space-y-5">
+              <div className={`p-4 rounded-lg ${dm ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <h3 className={`font-semibold mb-3 ${labelText}`}>Utseende</h3>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className={`font-medium ${bodyText}`}>Mørk modus</p>
+                    <p className={`text-sm ${mutedText}`}>Mørkt fargetema for hele appen</p>
+                  </div>
+                  <Toggle value={darkMode} onToggle={toggleDarkMode} />
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-lg ${dm ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <h3 className={`font-semibold mb-1 ${labelText}`}>Funksjoner</h3>
+                <p className={`text-sm mb-3 ${mutedText}`}>Slå av funksjoner du ikke bruker for å forenkle forsiden.</p>
+                <div className={`divide-y ${dividerColor}`}>
+                  {featureList.map(({ key, label, desc }) => (
+                    <div key={key} className="flex items-center justify-between py-3">
+                      <div>
+                        <p className={`font-medium ${bodyText}`}>{label}</p>
+                        <p className={`text-sm ${mutedText}`}>{desc}</p>
+                      </div>
+                      <Toggle value={features[key]} onToggle={() => toggleFeature(key)} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Oppgaver */}
           {activeTab === 'tasks' && (
             <div>
-              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
-                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Legg til ny oppgave</h3>
+              <div className={`mb-6 p-4 rounded-lg ${sectionBg('blue')}`}>
+                <h3 className={`font-semibold mb-3 ${labelText}`}>Legg til ny oppgave</h3>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
                     placeholder="Oppgavenavn"
                     value={newTask.title}
                     onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                    className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
-                    }`}
+                    className={`flex-1 ${inputClass}`}
                   />
                   <input
                     type="number"
                     min="1"
                     value={newTask.target_count}
                     onChange={(e) => setNewTask({ ...newTask, target_count: parseInt(e.target.value) || 1 })}
-                    className={`w-20 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'
-                    }`}
+                    className={`w-20 ${inputClass}`}
                     title="Antall ganger per uke"
                   />
-                  <button
-                    onClick={addTask}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Legg til
+                  <button onClick={addTask} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <Plus className="w-5 h-5" />Legg til
                   </button>
                 </div>
               </div>
 
               <div className="space-y-2">
                 {tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
+                  <div key={task.id} className={`flex items-center justify-between p-4 rounded-lg transition-colors ${listItem}`}>
                     <div className="flex-1">
-                      <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{task.title}</h4>
+                      <h4 className={`font-semibold ${bodyText}`}>{task.title}</h4>
                       {editingTaskId === task.id ? (
                         <div className="flex items-center gap-2 mt-2">
                           <input
@@ -345,48 +359,30 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                             min="1"
                             value={editingTaskCount}
                             onChange={(e) => setEditingTaskCount(parseInt(e.target.value) || 1)}
-                            className={`w-20 px-3 py-1 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                              darkMode ? 'bg-gray-600 text-gray-100' : 'bg-white'
-                            }`}
+                            className={`w-20 px-3 py-1 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${dm ? 'bg-gray-600 text-gray-100' : 'bg-white'}`}
                           />
-                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>ganger per uke</span>
+                          <span className={`text-sm ${mutedText}`}>ganger per uke</span>
                         </div>
                       ) : (
-                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{task.target_count}x per uke</p>
+                        <p className={`text-sm ${mutedText}`}>{task.target_count}x per uke</p>
                       )}
                     </div>
                     <div className="flex gap-2">
                       {editingTaskId === task.id ? (
                         <>
-                          <button
-                            onClick={() => saveTaskEdit(task.id)}
-                            className={`p-2 text-green-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-green-50'}`}
-                            title="Lagre"
-                          >
+                          <button onClick={() => saveTaskEdit(task.id)} className={`p-2 text-green-500 rounded-lg transition-colors ${dm ? 'hover:bg-gray-500' : 'hover:bg-green-50'}`} title="Lagre">
                             <Check className="w-5 h-5" />
                           </button>
-                          <button
-                            onClick={cancelEditingTask}
-                            className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-gray-400 hover:bg-gray-500' : 'text-gray-600 hover:bg-gray-200'}`}
-                            title="Avbryt"
-                          >
+                          <button onClick={cancelEditingTask} className={`p-2 rounded-lg transition-colors ${dm ? 'text-gray-400 hover:bg-gray-500' : 'text-gray-600 hover:bg-gray-200'}`} title="Avbryt">
                             <X className="w-5 h-5" />
                           </button>
                         </>
                       ) : (
                         <>
-                          <button
-                            onClick={() => startEditingTask(task)}
-                            className={`p-2 text-blue-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-blue-50'}`}
-                            title="Rediger antall"
-                          >
+                          <button onClick={() => startEditingTask(task)} className={`p-2 text-blue-500 rounded-lg transition-colors ${dm ? 'hover:bg-gray-500' : 'hover:bg-blue-50'}`} title="Rediger antall">
                             <Edit className="w-5 h-5" />
                           </button>
-                          <button
-                            onClick={() => deleteTask(task.id)}
-                            className={`p-2 text-red-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}
-                            title="Slett"
-                          >
+                          <button onClick={() => deleteTask(task.id)} className={`p-2 text-red-500 rounded-lg transition-colors ${dm ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`} title="Slett">
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </>
@@ -398,68 +394,34 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
             </div>
           )}
 
+          {/* Barn */}
           {activeTab === 'children' && (
             <div>
-              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-50'}`}>
-                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Legg til barn</h3>
+              <div className={`mb-6 p-4 rounded-lg ${sectionBg('green')}`}>
+                <h3 className={`font-semibold mb-3 ${labelText}`}>Legg til barn</h3>
                 <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Navn"
-                    value={newChild.name}
-                    onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
-                    className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
-                    }`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Emoji"
-                    value={newChild.avatar_emoji}
-                    onChange={(e) => setNewChild({ ...newChild, avatar_emoji: e.target.value })}
-                    className={`w-20 px-4 py-2 border rounded-lg text-center text-2xl ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'
-                    }`}
-                  />
-                  <input
-                    type="color"
-                    value={newChild.color}
-                    onChange={(e) => setNewChild({ ...newChild, color: e.target.value })}
-                    className={`w-16 h-11 border rounded-lg cursor-pointer ${
-                      darkMode ? 'bg-gray-700 border-gray-600' : 'border-gray-300'
-                    }`}
-                  />
-                  <button
-                    onClick={addChild}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Legg til
+                  <input type="text" placeholder="Navn" value={newChild.name} onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
+                    className={`flex-1 ${inputClass}`} />
+                  <input type="text" placeholder="Emoji" value={newChild.avatar_emoji} onChange={(e) => setNewChild({ ...newChild, avatar_emoji: e.target.value })}
+                    className={`w-20 px-4 py-2 border rounded-lg text-center text-2xl focus:outline-none ${dm ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'}`} />
+                  <input type="color" value={newChild.color} onChange={(e) => setNewChild({ ...newChild, color: e.target.value })}
+                    className={`w-16 h-11 border rounded-lg cursor-pointer ${dm ? 'bg-gray-700 border-gray-600' : 'border-gray-300'}`} />
+                  <button onClick={addChild} className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                    <Plus className="w-5 h-5" />Legg til
                   </button>
                 </div>
               </div>
 
               <div className="space-y-2">
                 {children.map((child) => (
-                  <div
-                    key={child.id}
-                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
+                  <div key={child.id} className={`flex items-center justify-between p-4 rounded-lg transition-colors ${listItem}`}>
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                        style={{ backgroundColor: child.color + '20' }}
-                      >
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: child.color + '20' }}>
                         {child.avatar_emoji}
                       </div>
-                      <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h4>
+                      <h4 className={`font-semibold ${bodyText}`}>{child.name}</h4>
                     </div>
-                    <button
-                      onClick={() => deleteChild(child.id)}
-                      className={`p-2 text-red-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}
-                    >
+                    <button onClick={() => deleteChild(child.id)} className={`p-2 text-red-500 rounded-lg transition-colors ${dm ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}>
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -468,35 +430,31 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
             </div>
           )}
 
+          {/* Kalender */}
           {activeTab === 'calendar' && (
             <div>
-              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-50'}`}>
-                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Kalender Innstillinger</h3>
-                <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <div className={`mb-6 p-4 rounded-lg ${sectionBg('purple')}`}>
+                <h3 className={`font-semibold mb-3 ${labelText}`}>Kalender Innstillinger</h3>
+                <p className={`text-sm mb-4 ${mutedText}`}>
                   Lim inn den hemmelige iCal-adressen fra kalenderen din. Dette fungerer med Google Calendar, Outlook, Apple Calendar og andre.
                 </p>
                 <div className="space-y-3">
                   <div>
-                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      iCal URL (Hemmelig adresse)
-                    </label>
+                    <label className={`block text-sm font-medium mb-1 ${labelText}`}>iCal URL (Hemmelig adresse)</label>
                     <input
                       type="text"
                       placeholder="https://calendar.google.com/calendar/ical/..."
                       value={calendarSettings.ical_url}
                       onChange={(e) => setCalendarSettings({ ...calendarSettings, ical_url: e.target.value })}
-                      className={`${inputClass} font-mono text-sm`}
+                      className={`w-full ${inputClass} font-mono text-sm`}
                     />
-                    <div className={`text-xs mt-2 space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div className={`text-xs mt-2 space-y-1 ${mutedText}`}>
                       <p className="font-semibold">Slik finner du iCal-adressen:</p>
                       <p><strong>Google Calendar:</strong> Kalenderinnstillinger → Integrer kalender → Hemmelig adresse i iCal-format</p>
                       <p><strong>Outlook:</strong> Kalenderinnstillinger → Delte kalendere → Publiser en kalender → ICS-format</p>
                     </div>
                   </div>
-                  <button
-                    onClick={saveCalendarSettings}
-                    className="w-full px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
+                  <button onClick={saveCalendarSettings} className="w-full px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                     Lagre innstillinger
                   </button>
                 </div>
@@ -504,10 +462,11 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
             </div>
           )}
 
+          {/* Måltider */}
           {activeTab === 'meals' && (
             <div>
-              <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-orange-900/30' : 'bg-orange-50'}`}>
-                <h3 className={`font-semibold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Legg til middag</h3>
+              <div className={`mb-6 p-4 rounded-lg ${sectionBg('orange')}`}>
+                <h3 className={`font-semibold mb-3 ${labelText}`}>Legg til middag</h3>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -516,40 +475,23 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                     onChange={(e) => setNewMealName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && addMeal()}
                     className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
+                      dm ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
                     }`}
                   />
-                  <button
-                    onClick={addMeal}
-                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Legg til
+                  <button onClick={addMeal} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                    <Plus className="w-5 h-5" />Legg til
                   </button>
                 </div>
               </div>
 
               <div className="space-y-2">
                 {meals.length === 0 && (
-                  <p className={`text-sm text-center py-4 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Ingen middager lagt til ennå
-                  </p>
+                  <p className={`text-sm text-center py-4 ${mutedText}`}>Ingen middager lagt til ennå</p>
                 )}
                 {meals.map((meal) => (
-                  <div
-                    key={meal.id}
-                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                      darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                      {getMealIcon(meal.name)} {meal.name}
-                    </span>
-                    <button
-                      onClick={() => deleteMeal(meal.id)}
-                      className={`p-2 text-red-500 rounded-lg transition-colors ${darkMode ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`}
-                      title="Slett"
-                    >
+                  <div key={meal.id} className={`flex items-center justify-between p-4 rounded-lg transition-colors ${listItem}`}>
+                    <span className={`font-semibold ${bodyText}`}>{getMealIcon(meal.name)} {meal.name}</span>
+                    <button onClick={() => deleteMeal(meal.id)} className={`p-2 text-red-500 rounded-lg transition-colors ${dm ? 'hover:bg-gray-500' : 'hover:bg-red-50'}`} title="Slett">
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -560,9 +502,9 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
               <div className="mt-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Search className="w-5 h-5 text-orange-500" />
-                  <h3 className={`font-bold text-lg ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Finn inspirasjon</h3>
+                  <h3 className={`font-bold text-lg ${bodyText}`}>Finn inspirasjon</h3>
                 </div>
-                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className={`text-sm mb-3 ${mutedText}`}>
                   Søk etter ingredienser eller retttype – henter oppskrifter fra matprat.no
                 </p>
                 <div className="flex gap-2 mb-4">
@@ -573,7 +515,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                     onChange={(e) => setInspirationQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && searchInspiration()}
                     className={`flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
+                      dm ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
                     }`}
                   />
                   <button
@@ -581,17 +523,12 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                     disabled={inspirationLoading || !inspirationQuery.trim()}
                     className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {inspirationLoading
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <Search className="w-4 h-4" />
-                    }
+                    {inspirationLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     Søk
                   </button>
                 </div>
 
-                {inspirationError && (
-                  <p className="text-sm text-red-400 mb-4">{inspirationError}</p>
-                )}
+                {inspirationError && <p className="text-sm text-red-400 mb-4">{inspirationError}</p>}
 
                 {inspirationResults.length > 0 && (
                   <>
@@ -599,56 +536,39 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                       {inspirationResults.map((recipe) => {
                         const isAdded = addedRecipes.has(recipe.title);
                         return (
-                          <div
-                            key={recipe.url}
-                            className={`border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col ${
-                              darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'
-                            }`}
-                          >
-                            <div className={`h-32 overflow-hidden ${darkMode ? 'bg-gray-600' : 'bg-gray-100'}`}>
+                          <div key={recipe.url} className={`border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col ${
+                            dm ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'
+                          }`}>
+                            <div className={`h-32 overflow-hidden ${dm ? 'bg-gray-600' : 'bg-gray-100'}`}>
                               {recipe.image ? (
-                                <img
-                                  src={recipe.image}
-                                  alt={recipe.title}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                />
+                                <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-4xl">🍽️</div>
                               )}
                             </div>
                             <div className="p-3 flex flex-col flex-1">
-                              <p className={`font-semibold text-sm leading-tight mb-1 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                                {recipe.title}
-                              </p>
-                              <div className={`text-xs space-y-0.5 mb-3 flex-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <p className={`font-semibold text-sm leading-tight mb-1 ${bodyText}`}>{recipe.title}</p>
+                              <div className={`text-xs space-y-0.5 mb-3 flex-1 ${mutedText}`}>
                                 {recipe.rating && <p>⭐ {recipe.rating}</p>}
                                 {recipe.difficulty && <p>{recipe.difficulty}</p>}
                                 {recipe.time && <p>⏱ {recipe.time}</p>}
                               </div>
                               <div className="flex gap-1.5">
-                                <a
-                                  href={recipe.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                <a href={recipe.url} target="_blank" rel="noopener noreferrer"
                                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs border rounded-lg transition-colors ${
-                                    darkMode
-                                      ? 'border-gray-500 text-gray-300 hover:bg-gray-600'
-                                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                                  }`}
-                                >
-                                  <ExternalLink className="w-3 h-3" />
-                                  Se oppskrift
+                                    dm ? 'border-gray-500 text-gray-300 hover:bg-gray-600' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                                  }`}>
+                                  <ExternalLink className="w-3 h-3" />Se oppskrift
                                 </a>
                                 <button
                                   onClick={() => !isAdded && addRecipeToMeals(recipe.title, recipe.url)}
                                   disabled={isAdded}
                                   className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
                                     isAdded
-                                      ? darkMode ? 'bg-green-800/60 text-green-400 cursor-default' : 'bg-green-100 text-green-700 cursor-default'
+                                      ? dm ? 'bg-green-800/60 text-green-400 cursor-default' : 'bg-green-100 text-green-700 cursor-default'
                                       : 'bg-orange-500 text-white hover:bg-orange-600'
-                                  }`}
-                                >
+                                  }`}>
                                   {isAdded ? <><Check className="w-3 h-3" /> Lagt til</> : <><Plus className="w-3 h-3" /> Legg til</>}
                                 </button>
                               </div>
@@ -658,21 +578,15 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                       })}
                     </div>
 
-                    <div className={`pt-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                      <p className={`text-xs mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Søk videre på:</p>
+                    <div className={`pt-3 border-t ${dm ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <p className={`text-xs mb-2 ${dm ? 'text-gray-500' : 'text-gray-400'}`}>Søk videre på:</p>
                       <div className="flex flex-wrap gap-2">
                         {externalSites.map((site) => (
-                          <a
-                            key={site.name}
-                            href={site.url(inspirationQuery)}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <a key={site.name} href={site.url(inspirationQuery)} target="_blank" rel="noopener noreferrer"
                             className={`inline-flex items-center gap-1 px-3 py-1 text-xs border rounded-full transition-colors hover:text-orange-500 hover:border-orange-400 ${
-                              darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'
-                            }`}
-                          >
-                            {site.name}
-                            <ExternalLink className="w-2.5 h-2.5" />
+                              dm ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'
+                            }`}>
+                            {site.name}<ExternalLink className="w-2.5 h-2.5" />
                           </a>
                         ))}
                       </div>
@@ -684,10 +598,7 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
           )}
         </div>
 
-        <button
-          onClick={resetWeek}
-          className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold text-lg hover:bg-red-700 transition-colors shadow-lg"
-        >
+        <button onClick={resetWeek} className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold text-lg hover:bg-red-700 transition-colors shadow-lg">
           Nullstill uke
         </button>
       </div>

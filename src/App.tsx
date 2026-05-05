@@ -5,12 +5,12 @@ import { AdminView } from './components/AdminView';
 import type { Child } from './lib/api';
 
 type View = 'home' | 'child' | 'admin';
-type AdminTab = 'tasks' | 'children' | 'calendar' | 'meals';
+type AdminTab = 'settings' | 'tasks' | 'children' | 'calendar' | 'meals';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('home');
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
-  const [adminInitialTab, setAdminInitialTab] = useState<AdminTab>('tasks');
+  const [adminInitialTab, setAdminInitialTab] = useState<AdminTab>('settings');
 
   function handleSelectChild(child: Child) {
     setSelectedChild(child);
@@ -22,7 +22,7 @@ function App() {
     setSelectedChild(null);
   }
 
-  function handleAdminClick(tab: AdminTab = 'tasks') {
+  function handleAdminClick(tab: AdminTab = 'settings') {
     setAdminInitialTab(tab);
     setCurrentView('admin');
   }

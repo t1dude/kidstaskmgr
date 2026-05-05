@@ -11,7 +11,7 @@ interface ChildWithProgress extends Child {
 
 interface HomeScreenProps {
   onSelectChild: (child: Child) => void;
-  onAdminClick: (tab?: 'tasks' | 'children' | 'calendar' | 'meals') => void;
+  onAdminClick: (tab?: 'settings' | 'tasks' | 'children' | 'calendar' | 'meals') => void;
 }
 
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
@@ -24,6 +24,14 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
+  });
+  const [features] = useState(() => {
+    try {
+      const saved = localStorage.getItem('appFeatures');
+      return saved ? JSON.parse(saved) : { tasks: true, calendar: true, meals: true };
+    } catch {
+      return { tasks: true, calendar: true, meals: true };
+    }
   });
 
   useEffect(() => {
@@ -260,7 +268,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           )}
         </button>
         <button
-          onClick={onAdminClick}
+          onClick={() => onAdminClick()}
           className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
             darkMode ? 'bg-gray-700' : 'bg-white'
           }`}
@@ -279,7 +287,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {features.tasks && <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {children.map((child) => (
             <div key={child.id} className="relative">
               <button
@@ -348,9 +356,9 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               )}
             </div>
           ))}
-        </div>
+        </div>}
 
-        {children.length === 0 && (
+        {features.tasks && children.length === 0 && (
           <div className={`rounded-3xl p-12 shadow-2xl text-center mb-8 ${
             darkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
@@ -364,8 +372,8 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        {(features.calendar || features.meals) && <div className={`grid grid-cols-1 gap-6 mb-8 ${features.calendar && features.meals ? 'md:grid-cols-2' : ''}`}>
+          {features.calendar && <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <CalendarIcon className={`w-7 h-7 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -425,9 +433,9 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 Ingen kommende hendelser
               </p>
             )}
-          </div>
+          </div>}
 
-          <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          {features.meals && <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Utensils className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
@@ -512,8 +520,8 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 })}
               </div>
             )}
-          </div>
-        </div>
+          </div>}
+        </div>}
       </div>
 
       {selectedChildTips && (

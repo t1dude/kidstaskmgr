@@ -215,6 +215,18 @@ docker-compose up -d --build
 
 ## Versjonshistorikk
 
+### v1.4.0 - Generelt-fane og funksjonsstyring (2026-05-05)
+
+**Nye funksjoner:**
+- Ny «Generelt»-fane i innstillinger – åpnes automatisk når man trykker på tannhjulet
+- Mørk modus-toggle direkte i innstillinger (oppdateres umiddelbart)
+- Funksjonsstyring: slå av/på Oppgaveliste, Kalender og Middagsplanlegging individuelt
+- Deaktiverte funksjoner skjules fra forsiden; panelene tar full bredde hvis bare én er aktiv
+
+**Tekniske endringer:**
+- `appFeatures`-nøkkel i localStorage lagrer aktive funksjoner
+- Fikset bug hvor tannhjul-knappen sendte `MouseEvent` som fane-argument i stedet for å bruke default
+
 ### v1.3.1 - Mørk modus i innstillinger (2026-05-05)
 
 **Forbedringer:**
