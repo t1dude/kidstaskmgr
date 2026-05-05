@@ -435,7 +435,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             )}
           </div>}
 
-          {features.meals && <div className={`rounded-2xl p-6 shadow-xl flex flex-col ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          {features.meals && <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Utensils className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
@@ -458,7 +458,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 Legg til middager under Innstillinger → Måltider
               </p>
             ) : (
-              <div className="flex flex-col flex-1 justify-between gap-1">
+              <div className="space-y-5">
                 {getWeekDays().map((day) => {
                   const selectedMealId = mealPlan[day.date] || '';
                   const selectedMeal = meals.find((m) => m.id === selectedMealId);
