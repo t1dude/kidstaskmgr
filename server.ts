@@ -65,6 +65,19 @@ function initDatabase() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS meals (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS meal_plan (
+      id TEXT PRIMARY KEY,
+      meal_id TEXT,
+      planned_date TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_task_completions_child_id ON task_completions(child_id);
     CREATE INDEX IF NOT EXISTS idx_task_completions_task_id ON task_completions(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_completions_week_start ON task_completions(week_start_date);
@@ -243,6 +256,86 @@ app.delete('/api/reset-week', (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reset week' });
+  }
+});
+
+app.get('/api/meals', (req, res) => {
+  try {
+    const meals = db.prepare('SELECT * FROM meals ORDER BY name ASC').all();
+    res.json(meals);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch meals' });
+  }
+});
+
+app.post('/api/meals', (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Name is required' });
+    const id = generateId();
+    const created_at = new Date().toISOString();
+    db.prepare('INSERT INTO meals (id, name, created_at) VALUES (?, ?, ?)').run(id, name.trim(), created_at);
+    res.json({ id, name: name.trim(), created_at });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create meal' });
+  }
+});
+
+app.delete('/api/meals/:id', (req, res) => {
+  try {
+    db.prepare('UPDATE meal_plan SET meal_id = NULL WHERE meal_id = ?').run(req.params.id);
+    db.prepare('DELETE FROM meals WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete meal' });
+  }
+});
+
+app.get('/api/meal-plan', (req, res) => {
+  try {
+    const { week_start } = req.query as { week_start: string };
+    if (!week_start) return res.status(400).json({ error: 'week_start is required' });
+    const weekEnd = new Date(week_start);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    const entries = db.prepare(`
+      SELECT mp.id, mp.meal_id, mp.planned_date, m.name as meal_name
+      FROM meal_plan mp
+      LEFT JOIN meals m ON mp.meal_id = m.id
+      WHERE mp.planned_date >= ? AND mp.planned_date <= ?
+      ORDER BY mp.planned_date ASC
+    `).all(week_start, weekEndStr);
+    res.json(entries);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch meal plan' });
+  }
+});
+
+app.put('/api/meal-plan/:date', (req, res) => {
+  try {
+    const { date } = req.params;
+    const { meal_id } = req.body;
+    const existing = db.prepare('SELECT * FROM meal_plan WHERE planned_date = ?').get(date);
+    if (existing) {
+      db.prepare('UPDATE meal_plan SET meal_id = ? WHERE planned_date = ?').run(meal_id || null, date);
+      res.json({ ...existing, meal_id: meal_id || null });
+    } else {
+      const id = generateId();
+      const created_at = new Date().toISOString();
+      db.prepare('INSERT INTO meal_plan (id, meal_id, planned_date, created_at) VALUES (?, ?, ?, ?)').run(id, meal_id || null, date, created_at);
+      res.json({ id, meal_id: meal_id || null, planned_date: date, created_at });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update meal plan' });
+  }
+});
+
+app.delete('/api/meal-plan/:date', (req, res) => {
+  try {
+    db.prepare('DELETE FROM meal_plan WHERE planned_date = ?').run(req.params.date);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete meal plan entry' });
   }
 });
 

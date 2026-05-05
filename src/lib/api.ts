@@ -43,6 +43,19 @@ export interface CalendarEvent {
   location?: string;
 }
 
+export interface Meal {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface MealPlanEntry {
+  id: string;
+  meal_id: string | null;
+  meal_name: string | null;
+  planned_date: string;
+}
+
 export const api = {
   async getChildren(): Promise<Child[]> {
     const response = await fetch(`${API_URL}/children`);
@@ -134,5 +147,41 @@ export const api = {
       return [];
     }
     return response.json();
+  },
+
+  async getMeals(): Promise<Meal[]> {
+    const response = await fetch(`${API_URL}/meals`);
+    return response.json();
+  },
+
+  async createMeal(name: string): Promise<Meal> {
+    const response = await fetch(`${API_URL}/meals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    return response.json();
+  },
+
+  async deleteMeal(id: string): Promise<void> {
+    await fetch(`${API_URL}/meals/${id}`, { method: 'DELETE' });
+  },
+
+  async getMealPlan(weekStart: string): Promise<MealPlanEntry[]> {
+    const response = await fetch(`${API_URL}/meal-plan?week_start=${weekStart}`);
+    return response.json();
+  },
+
+  async setMealPlan(date: string, mealId: string | null): Promise<MealPlanEntry> {
+    const response = await fetch(`${API_URL}/meal-plan/${date}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ meal_id: mealId }),
+    });
+    return response.json();
+  },
+
+  async deleteMealPlan(date: string): Promise<void> {
+    await fetch(`${API_URL}/meal-plan/${date}`, { method: 'DELETE' });
   },
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X } from 'lucide-react';
-import type { Child, CalendarEvent, Task, TaskCompletion } from '../lib/api';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw } from 'lucide-react';
+import type { Child, CalendarEvent, Task, TaskCompletion, Meal } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 
 interface ChildWithProgress extends Child {
@@ -11,12 +11,15 @@ interface ChildWithProgress extends Child {
 
 interface HomeScreenProps {
   onSelectChild: (child: Child) => void;
-  onAdminClick: () => void;
+  onAdminClick: (tab?: 'tasks' | 'children' | 'calendar' | 'meals') => void;
 }
 
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [children, setChildren] = useState<ChildWithProgress[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [mealPlan, setMealPlan] = useState<Record<string, string>>({});
+  const [calendarRefreshing, setCalendarRefreshing] = useState(false);
   const [selectedChildTips, setSelectedChildTips] = useState<{ child: Child; tips: Tip[] } | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
@@ -26,6 +29,8 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   useEffect(() => {
     loadChildrenWithProgress();
     loadCalendarEvents();
+    loadMeals();
+    loadMealPlan();
 
     const calendarInterval = setInterval(() => {
       loadCalendarEvents();
@@ -103,6 +108,90 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     } catch (error) {
       console.error('Failed to load calendar events', error);
     }
+  }
+
+  async function refreshCalendar() {
+    setCalendarRefreshing(true);
+    await loadCalendarEvents();
+    setCalendarRefreshing(false);
+  }
+
+  function getMealIcon(name: string): string {
+    const n = name.toLowerCase();
+    if (n.includes('taco')) return '🌮';
+    if (n.includes('pizza')) return '🍕';
+    if (n.includes('pasta') || n.includes('spagetti') || n.includes('spaghetti') || n.includes('lasagne') || n.includes('carbonara')) return '🍝';
+    if (n.includes('burger') || n.includes('hamburger')) return '🍔';
+    if (n.includes('sushi')) return '🍣';
+    if (n.includes('salat') || n.includes('salad')) return '🥗';
+    if (n.includes('suppe') || n.includes('soup')) return '🍲';
+    if (n.includes('kylling') || n.includes('chicken')) return '🍗';
+    if (n.includes('laks') || n.includes('salmon') || n.includes('torsk') || n.includes('sei') || n.includes('fiskepinn') || n.includes('fiskebolle')) return '🐟';
+    if (n.includes('fisk')) return '🐟';
+    if (n.includes('ribs') || n.includes('biff') || n.includes('steak') || n.includes('svin')) return '🥩';
+    if (n.includes('wrap')) return '🌯';
+    if (n.includes('sandwich') || n.includes('toast')) return '🥪';
+    if (n.includes('wok')) return '🥢';
+    if (n.includes('curry')) return '🍛';
+    if (n.includes('grøt')) return '🥣';
+    if (n.includes('pannekake') || n.includes('pancake') || n.includes('vaffel')) return '🥞';
+    if (n.includes('pølse') || n.includes('hotdog') || n.includes('grillpølse')) return '🌭';
+    if (n.includes('kebab')) return '🥙';
+    if (n.includes('reke') || n.includes('sjømat')) return '🦐';
+    if (n.includes('nudel') || n.includes('ramen')) return '🍜';
+    if (n.includes('egg') || n.includes('omelett')) return '🍳';
+    return '🍽️';
+  }
+
+  async function loadMeals() {
+    try {
+      const data = await api.getMeals();
+      setMeals(data);
+    } catch (error) {
+      console.error('Failed to load meals', error);
+    }
+  }
+
+  async function loadMealPlan() {
+    try {
+      const weekStart = getWeekStart();
+      const entries = await api.getMealPlan(weekStart);
+      const plan: Record<string, string> = {};
+      entries.forEach((e) => {
+        if (e.meal_id) plan[e.planned_date] = e.meal_id;
+      });
+      setMealPlan(plan);
+    } catch (error) {
+      console.error('Failed to load meal plan', error);
+    }
+  }
+
+  async function setMealForDay(date: string, mealId: string) {
+    try {
+      if (!mealId) {
+        await api.deleteMealPlan(date);
+        setMealPlan((prev) => {
+          const updated = { ...prev };
+          delete updated[date];
+          return updated;
+        });
+      } else {
+        await api.setMealPlan(date, mealId);
+        setMealPlan((prev) => ({ ...prev, [date]: mealId }));
+      }
+    } catch (error) {
+      console.error('Failed to update meal plan', error);
+    }
+  }
+
+  function getWeekDays(): { date: string; label: string }[] {
+    const monday = new Date(getWeekStart());
+    const dayNames = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+    return dayNames.map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(d.getDate() + i);
+      return { date: d.toISOString().split('T')[0], label };
+    });
   }
 
   function getDayLabel(dateString: string): string {
@@ -275,57 +364,137 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </div>
         )}
 
-        {calendarEvents.length > 0 && (
-          <div className={`rounded-2xl p-6 shadow-xl ${
-            darkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className="flex items-center gap-3 mb-6">
-              <CalendarIcon className={`w-7 h-7 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-              <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                Kommende hendelser
-              </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <CalendarIcon className={`w-7 h-7 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  Kommende hendelser
+                </h2>
+              </div>
+              <button
+                onClick={refreshCalendar}
+                disabled={calendarRefreshing}
+                className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${
+                  darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-500 hover:bg-blue-50'
+                } ${calendarRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title="Oppdater kalender"
+              >
+                <RefreshCw className={`w-5 h-5 ${calendarRefreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-            <div className="space-y-6">
-              {Object.entries(groupEventsByDay(calendarEvents)).map(([dateKey, events]) => (
-                <div key={dateKey} className="space-y-2">
-                  <h3 className={`text-lg font-bold capitalize border-b-2 pb-2 ${
-                    darkMode
-                      ? 'text-gray-200 border-blue-500'
-                      : 'text-gray-700 border-blue-200'
-                  }`}>
-                    {getDayLabel(events[0].start)}
-                  </h3>
-                  <div className="space-y-2">
-                    {events.map((event) => (
-                      <div
-                        key={event.id}
-                        className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                          darkMode
-                            ? 'bg-gray-700 hover:bg-gray-600'
-                            : 'bg-blue-50 hover:bg-blue-100'
-                        }`}
-                      >
-                        <div className="flex-1">
-                          <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                            {event.summary}
-                          </h4>
-                          <div className={`text-sm mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            <span>{formatEventTime(event.start, event.end)}</span>
-                          </div>
-                          {event.location && (
-                            <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                              📍 {event.location}
+            {calendarEvents.length > 0 ? (
+              <div className="space-y-6">
+                {Object.entries(groupEventsByDay(calendarEvents)).map(([dateKey, events]) => (
+                  <div key={dateKey} className="space-y-2">
+                    <h3 className={`text-lg font-bold capitalize border-b-2 pb-2 ${
+                      darkMode ? 'text-gray-200 border-blue-500' : 'text-gray-700 border-blue-200'
+                    }`}>
+                      {getDayLabel(events[0].start)}
+                    </h3>
+                    <div className="space-y-2">
+                      {events.map((event) => (
+                        <div
+                          key={event.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                            darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                              {event.summary}
+                            </h4>
+                            <div className={`text-sm mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              <span>{formatEventTime(event.start, event.end)}</span>
                             </div>
-                          )}
+                            {event.location && (
+                              <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                📍 {event.location}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Ingen kommende hendelser
+              </p>
+            )}
           </div>
-        )}
+
+          <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Utensils className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  Middagsplan
+                </h2>
+              </div>
+              <button
+                onClick={() => onAdminClick('meals')}
+                className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${
+                  darkMode ? 'text-orange-400 hover:bg-gray-700' : 'text-orange-500 hover:bg-orange-50'
+                }`}
+                title="Rediger måltider"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            </div>
+            {meals.length === 0 ? (
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Legg til middager under Innstillinger → Måltider
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {getWeekDays().map((day) => {
+                  const selectedMealId = mealPlan[day.date] || '';
+                  const selectedMeal = meals.find((m) => m.id === selectedMealId);
+                  const isToday = day.date === new Date().toISOString().split('T')[0];
+                  return (
+                    <div
+                      key={day.date}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${
+                        isToday
+                          ? darkMode ? 'bg-orange-900/30 ring-1 ring-orange-500' : 'bg-orange-50 ring-1 ring-orange-300'
+                          : ''
+                      }`}
+                    >
+                      <span className={`text-sm font-bold w-8 shrink-0 ${
+                        isToday
+                          ? darkMode ? 'text-orange-400' : 'text-orange-600'
+                          : darkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        {day.label}
+                      </span>
+                      <select
+                        value={selectedMealId}
+                        onChange={(e) => setMealForDay(day.date, e.target.value)}
+                        className={`flex-1 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                          darkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-orange-400'
+                            : 'bg-white border-gray-300 text-gray-800 focus:border-orange-400'
+                        } focus:outline-none focus:ring-1 focus:ring-orange-400`}
+                      >
+                        <option value="">— Velg middag —</option>
+                        {meals.map((meal) => (
+                          <option key={meal.id} value={meal.id}>{meal.name}</option>
+                        ))}
+                      </select>
+                      <span className="text-lg shrink-0 w-7 text-center">
+                        {selectedMeal ? getMealIcon(selectedMeal.name) : ''}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {selectedChildTips && (

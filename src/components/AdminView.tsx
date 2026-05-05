@@ -1,26 +1,30 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { Plus, Trash2, Settings, Edit, Check, X } from 'lucide-react';
-import type { Task, Child } from '../lib/api';
+import type { Task, Child, Meal } from '../lib/api';
 
 interface AdminViewProps {
   onBack: () => void;
+  initialTab?: 'tasks' | 'children' | 'calendar' | 'meals';
 }
 
-export function AdminView({ onBack }: AdminViewProps) {
+export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [newTask, setNewTask] = useState({ title: '', target_count: 1, icon: 'check-circle' });
   const [newChild, setNewChild] = useState({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
-  const [activeTab, setActiveTab] = useState<'tasks' | 'children' | 'calendar'>('tasks');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'children' | 'calendar' | 'meals'>(initialTab);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTaskCount, setEditingTaskCount] = useState<number>(1);
   const [calendarSettings, setCalendarSettings] = useState({ ical_url: '' });
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [newMealName, setNewMealName] = useState('');
 
   useEffect(() => {
     loadTasks();
     loadChildren();
     loadCalendarSettings();
+    loadMeals();
   }, []);
 
   async function loadTasks() {
@@ -123,6 +127,62 @@ export function AdminView({ onBack }: AdminViewProps) {
     }
   }
 
+  async function loadMeals() {
+    try {
+      const data = await api.getMeals();
+      setMeals(data);
+    } catch (error) {
+      console.error('Failed to load meals', error);
+    }
+  }
+
+  async function addMeal() {
+    if (!newMealName.trim()) return;
+    try {
+      await api.createMeal(newMealName);
+      setNewMealName('');
+      loadMeals();
+    } catch (error) {
+      console.error('Failed to add meal', error);
+    }
+  }
+
+  function getMealIcon(name: string): string {
+    const n = name.toLowerCase();
+    if (n.includes('taco')) return '🌮';
+    if (n.includes('pizza')) return '🍕';
+    if (n.includes('pasta') || n.includes('spagetti') || n.includes('spaghetti') || n.includes('lasagne') || n.includes('carbonara')) return '🍝';
+    if (n.includes('burger') || n.includes('hamburger')) return '🍔';
+    if (n.includes('sushi')) return '🍣';
+    if (n.includes('salat') || n.includes('salad')) return '🥗';
+    if (n.includes('suppe') || n.includes('soup')) return '🍲';
+    if (n.includes('kylling') || n.includes('chicken')) return '🍗';
+    if (n.includes('laks') || n.includes('salmon') || n.includes('torsk') || n.includes('sei') || n.includes('fiskepinn') || n.includes('fiskebolle')) return '🐟';
+    if (n.includes('fisk')) return '🐟';
+    if (n.includes('ribs') || n.includes('biff') || n.includes('steak') || n.includes('svin')) return '🥩';
+    if (n.includes('wrap')) return '🌯';
+    if (n.includes('sandwich') || n.includes('toast')) return '🥪';
+    if (n.includes('wok')) return '🥢';
+    if (n.includes('curry')) return '🍛';
+    if (n.includes('grøt')) return '🥣';
+    if (n.includes('pannekake') || n.includes('pancake') || n.includes('vaffel')) return '🥞';
+    if (n.includes('pølse') || n.includes('hotdog') || n.includes('grillpølse')) return '🌭';
+    if (n.includes('kebab')) return '🥙';
+    if (n.includes('reke') || n.includes('sjømat')) return '🦐';
+    if (n.includes('nudel') || n.includes('ramen')) return '🍜';
+    if (n.includes('egg') || n.includes('omelett')) return '🍳';
+    return '🍽️';
+  }
+
+  async function deleteMeal(id: string) {
+    try {
+      await api.deleteMeal(id);
+      loadMeals();
+    } catch (error) {
+      console.error('Failed to delete meal', error);
+    }
+  }
+
   async function loadCalendarSettings() {
     try {
       const data = await api.getCalendarSettings();
@@ -191,6 +251,16 @@ export function AdminView({ onBack }: AdminViewProps) {
               }`}
             >
               Kalender
+            </button>
+            <button
+              onClick={() => setActiveTab('meals')}
+              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'meals'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Måltider
             </button>
           </div>
 
@@ -384,6 +454,53 @@ export function AdminView({ onBack }: AdminViewProps) {
                     Lagre innstillinger
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+          {activeTab === 'meals' && (
+            <div>
+              <div className="mb-6 p-4 bg-orange-50 rounded-lg">
+                <h3 className="font-semibold text-gray-700 mb-3">Legg til middag</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="F.eks. Taco, Pasta bolognese..."
+                    value={newMealName}
+                    onChange={(e) => setNewMealName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addMeal()}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                  />
+                  <button
+                    onClick={addMeal}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Legg til
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {meals.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    Ingen middager lagt til ennå
+                  </p>
+                )}
+                {meals.map((meal) => (
+                  <div
+                    key={meal.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="font-semibold text-gray-800">{getMealIcon(meal.name)} {meal.name}</span>
+                    <button
+                      onClick={() => deleteMeal(meal.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Slett"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
