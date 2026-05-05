@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Settings, Edit, Check, X } from 'lucide-react';
-import type { Task, Child, Meal } from '../lib/api';
+import { Plus, Trash2, Settings, Edit, Check, X, Search, ExternalLink, Loader2 } from 'lucide-react';
+import type { Task, Child, Meal, RecipeInspiration } from '../lib/api';
 
 interface AdminViewProps {
   onBack: () => void;
@@ -19,6 +19,11 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
   const [calendarSettings, setCalendarSettings] = useState({ ical_url: '' });
   const [meals, setMeals] = useState<Meal[]>([]);
   const [newMealName, setNewMealName] = useState('');
+  const [inspirationQuery, setInspirationQuery] = useState('');
+  const [inspirationResults, setInspirationResults] = useState<RecipeInspiration[]>([]);
+  const [inspirationLoading, setInspirationLoading] = useState(false);
+  const [inspirationError, setInspirationError] = useState<string | null>(null);
+  const [addedRecipes, setAddedRecipes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadTasks();
@@ -182,6 +187,40 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
       console.error('Failed to delete meal', error);
     }
   }
+
+  async function searchInspiration() {
+    if (!inspirationQuery.trim()) return;
+    setInspirationLoading(true);
+    setInspirationError(null);
+    setInspirationResults([]);
+    try {
+      const results = await api.getMealInspiration(inspirationQuery.trim());
+      setInspirationResults(results);
+      if (results.length === 0) setInspirationError('Ingen oppskrifter funnet – prøv et annet søkeord.');
+    } catch {
+      setInspirationError('Kunne ikke hente oppskrifter. Sjekk internettilkoblingen.');
+    } finally {
+      setInspirationLoading(false);
+    }
+  }
+
+  async function addRecipeToMeals(title: string) {
+    try {
+      await api.createMeal(title);
+      setAddedRecipes(prev => new Set(prev).add(title));
+      loadMeals();
+    } catch (error) {
+      console.error('Failed to add recipe as meal', error);
+    }
+  }
+
+  const externalSites = [
+    { name: 'godt.no', url: (q: string) => `https://www.godt.no/oppskrifter?q=${encodeURIComponent(q)}` },
+    { name: 'Trines matblogg', url: (q: string) => `https://www.trinesmatblogg.no/?s=${encodeURIComponent(q)}` },
+    { name: 'Gladkokken', url: (q: string) => `https://www.gladkokken.no/?s=${encodeURIComponent(q)}` },
+    { name: 'MENY', url: (q: string) => `https://meny.no/oppskrifter/?search=${encodeURIComponent(q)}` },
+    { name: 'REMA 1000', url: (q: string) => `https://rema.no/oppskrifter?q=${encodeURIComponent(q)}` },
+  ];
 
   async function loadCalendarSettings() {
     try {
@@ -501,6 +540,119 @@ export function AdminView({ onBack, initialTab = 'tasks' }: AdminViewProps) {
                     </button>
                   </div>
                 ))}
+              </div>
+
+              {/* Inspirasjon */}
+              <div className="mt-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Search className="w-5 h-5 text-orange-500" />
+                  <h3 className="font-bold text-gray-800 text-lg">Finn inspirasjon</h3>
+                </div>
+                <p className="text-sm text-gray-500 mb-3">
+                  Søk etter ingredienser eller retttype – henter oppskrifter fra matprat.no
+                </p>
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    placeholder="F.eks. kylling, fisk, suppe, grillmat..."
+                    value={inspirationQuery}
+                    onChange={(e) => setInspirationQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchInspiration()}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                  />
+                  <button
+                    onClick={searchInspiration}
+                    disabled={inspirationLoading || !inspirationQuery.trim()}
+                    className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {inspirationLoading
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Search className="w-4 h-4" />
+                    }
+                    Søk
+                  </button>
+                </div>
+
+                {inspirationError && (
+                  <p className="text-sm text-red-500 mb-4">{inspirationError}</p>
+                )}
+
+                {inspirationResults.length > 0 && (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+                      {inspirationResults.map((recipe) => {
+                        const isAdded = addedRecipes.has(recipe.title);
+                        return (
+                          <div
+                            key={recipe.url}
+                            className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col"
+                          >
+                            <div className="h-32 bg-gray-100 overflow-hidden">
+                              {recipe.image ? (
+                                <img
+                                  src={recipe.image}
+                                  alt={recipe.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-4xl">🍽️</div>
+                              )}
+                            </div>
+                            <div className="p-3 flex flex-col flex-1">
+                              <p className="font-semibold text-gray-800 text-sm leading-tight mb-1">{recipe.title}</p>
+                              <div className="text-xs text-gray-500 space-y-0.5 mb-3 flex-1">
+                                {recipe.rating && <p>⭐ {recipe.rating}</p>}
+                                {recipe.difficulty && <p>{recipe.difficulty}</p>}
+                                {recipe.time && <p>⏱ {recipe.time}</p>}
+                              </div>
+                              <div className="flex gap-1.5">
+                                <a
+                                  href={recipe.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  Se oppskrift
+                                </a>
+                                <button
+                                  onClick={() => !isAdded && addRecipeToMeals(recipe.title)}
+                                  disabled={isAdded}
+                                  className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg font-semibold transition-colors ${
+                                    isAdded
+                                      ? 'bg-green-100 text-green-700 cursor-default'
+                                      : 'bg-orange-500 text-white hover:bg-orange-600'
+                                  }`}
+                                >
+                                  {isAdded ? <><Check className="w-3 h-3" /> Lagt til</> : <><Plus className="w-3 h-3" /> Legg til</>}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-100">
+                      <p className="text-xs text-gray-400 mb-2">Søk videre på:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {externalSites.map((site) => (
+                          <a
+                            key={site.name}
+                            href={site.url(inspirationQuery)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 text-xs border border-gray-200 rounded-full text-gray-500 hover:border-orange-300 hover:text-orange-600 transition-colors"
+                          >
+                            {site.name}
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

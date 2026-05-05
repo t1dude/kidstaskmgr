@@ -56,6 +56,15 @@ export interface MealPlanEntry {
   planned_date: string;
 }
 
+export interface RecipeInspiration {
+  title: string;
+  url: string;
+  image: string;
+  rating: string;
+  difficulty: string;
+  time: string;
+}
+
 export const api = {
   async getChildren(): Promise<Child[]> {
     const response = await fetch(`${API_URL}/children`);
@@ -183,5 +192,11 @@ export const api = {
 
   async deleteMealPlan(date: string): Promise<void> {
     await fetch(`${API_URL}/meal-plan/${date}`, { method: 'DELETE' });
+  },
+
+  async getMealInspiration(query: string): Promise<RecipeInspiration[]> {
+    const response = await fetch(`${API_URL}/meal-inspiration?q=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Failed to fetch inspiration');
+    return response.json();
   },
 };

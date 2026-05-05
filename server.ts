@@ -339,6 +339,96 @@ app.delete('/api/meal-plan/:date', (req, res) => {
   }
 });
 
+let recipeUrlCache: { urls: string[]; fetchedAt: number } | null = null;
+
+async function getRecipeUrls(): Promise<string[]> {
+  const now = Date.now();
+  if (recipeUrlCache && now - recipeUrlCache.fetchedAt < 24 * 60 * 60 * 1000) {
+    return recipeUrlCache.urls;
+  }
+  const res = await fetch('https://www.matprat.no/sitemap.xml', {
+    headers: { 'User-Agent': 'anthropic-ai' },
+  });
+  const xml = await res.text();
+  const urls: string[] = [];
+  const regex = /<loc>(https:\/\/www\.matprat\.no\/oppskrifter\/[^<]+)<\/loc>/g;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(xml)) !== null) urls.push(m[1]);
+  recipeUrlCache = { urls, fetchedAt: now };
+  return urls;
+}
+
+function formatDuration(iso: string): string {
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!m) return '';
+  const h = parseInt(m[1] || '0');
+  const min = parseInt(m[2] || '0');
+  if (h > 0 && min > 0) return `${h} t ${min} min`;
+  if (h > 0) return `${h} t`;
+  return `${min} min`;
+}
+
+app.get('/api/meal-inspiration', async (req, res) => {
+  try {
+    const { q } = req.query as { q: string };
+    if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+
+    const terms = q.trim().toLowerCase().split(/\s+/);
+    const allUrls = await getRecipeUrls();
+
+    const matching = allUrls
+      .filter(url => {
+        const slug = url.replace('https://www.matprat.no/oppskrifter/', '').replace(/\/$/, '');
+        return terms.some(t => slug.includes(t));
+      })
+      .slice(0, 8);
+
+    if (matching.length === 0) return res.json([]);
+
+    const recipes = (await Promise.all(
+      matching.map(async (url) => {
+        try {
+          const r = await fetch(url, { headers: { 'User-Agent': 'anthropic-ai' } });
+          const html = await r.text();
+          const ldMatch = html.match(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/);
+          if (!ldMatch) return null;
+          const parsed = JSON.parse(ldMatch[1]);
+          const recipe = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (!recipe?.name) return null;
+
+          const rawImg = Array.isArray(recipe.image)
+            ? (recipe.image[0]?.url ?? recipe.image[0])
+            : (recipe.image?.url ?? recipe.image ?? '');
+          const image = typeof rawImg === 'string'
+            ? rawImg.replace(/__w=\d+_h=\d+/, '__w=400_h=300')
+            : '';
+
+          const diffMatch = recipe.description?.match(/(Superenkel|Enkel|Middels|Krevende)\s*vanskelighetsgrad/i);
+
+          return {
+            title: recipe.name as string,
+            url,
+            image,
+            time: recipe.totalTime ? formatDuration(recipe.totalTime as string) : '',
+            difficulty: diffMatch ? diffMatch[1] : '',
+            rating: '',
+          };
+        } catch {
+          return null;
+        }
+      })
+    )).filter(Boolean);
+
+    res.json(recipes);
+  } catch (error) {
+    console.error('Meal inspiration failed:', error);
+    res.status(500).json({ error: 'Kunne ikke hente oppskrifter' });
+  }
+});
+
+// Pre-warm recipe URL cache on startup
+getRecipeUrls().catch(err => console.error('Failed to pre-load recipe cache:', err));
+
 app.get('/api/calendar-settings', (req, res) => {
   try {
     const settings = db.prepare('SELECT * FROM calendar_settings LIMIT 1').get();
