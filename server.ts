@@ -1,12 +1,11 @@
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import ical from 'node-ical';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { lookup as dnsLookup } from 'dns/promises';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -71,6 +70,7 @@ async function validateSafeUrl(urlStr: string): Promise<void> {
 const dbPath = process.env.DB_PATH || path.join(__dirname, 'tasks.db');
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
 function initDatabase() {
   db.exec(`
@@ -135,14 +135,12 @@ initDatabase();
 try { db.exec('ALTER TABLE meals ADD COLUMN recipe_url TEXT'); } catch { /* already exists */ }
 
 function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return randomUUID();
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
+// No CORS middleware — frontend is served from the same origin (Express serves both)
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -159,7 +157,6 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-app.use(cors());
 app.use(express.json({ limit: '16kb' }));
 
 // Rate limiting
@@ -281,6 +278,9 @@ app.get('/api/task-completions/:childId/:weekStart', (req, res) => {
 app.post('/api/task-completions', (req, res) => {
   try {
     const { child_id, task_id, completion_count, week_start_date } = req.body;
+    if (!child_id || !task_id || !week_start_date) return res.status(400).json({ error: 'Missing required fields' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(week_start_date)) return res.status(400).json({ error: 'Invalid week_start_date' });
+    if (!Number.isInteger(completion_count) || completion_count < 0 || completion_count > 999) return res.status(400).json({ error: 'Invalid completion_count' });
     const existing = db.prepare('SELECT * FROM task_completions WHERE child_id = ? AND task_id = ? AND week_start_date = ?')
       .get(child_id, task_id, week_start_date);
     const updated_at = new Date().toISOString();
@@ -358,6 +358,7 @@ app.get('/api/meal-plan', (req, res) => {
 app.put('/api/meal-plan/:date', (req, res) => {
   try {
     const { date } = req.params;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date format' });
     const { meal_id } = req.body;
     const existing = db.prepare('SELECT * FROM meal_plan WHERE planned_date = ?').get(date);
     if (existing) {
@@ -522,6 +523,11 @@ app.get('/api/calendar-events', async (req, res) => {
     console.error('Failed to fetch calendar events:', error);
     res.json([]);
   }
+});
+
+// 404 for unknown API routes (must be before static files to avoid returning HTML)
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Not found' });
 });
 
 // Serve frontend static files and SPA fallback
