@@ -1,0 +1,78 @@
+🇬🇧 [English](CHANGELOG.md)
+
+# Endringslogg
+
+## v1.6.0 – Norsk/engelsk språkstøtte (2026-05-06)
+- Språkveksler-knapp (🇬🇧/🇳🇴) i toppmenyen på forsiden og i admin-panelet
+- Alle UI-strenger, dag-/månedsnavn og motivasjonsmeldinger for tips er fullt oversatt
+- Valgt språk lagres i `localStorage`
+
+## v1.5.4 – Feilrettinger (2026-05-06)
+- Fiks: innstillinger (funksjonsvekslere) ble ikke lagret på mobiltelefon – skyldtes at `sessionStorage` slettes når mobilnettlesere avslutter bakgrunnskategorier; byttet til `localStorage`
+- Fiks: Cosmos auto-update var deaktivert (`cosmos-auto-update`-etiketten var satt til `"false"`)
+
+## v1.5.3 – Familiesbeskjeder, emoji-velger og mobilforbedringer (2026-05-06)
+- Viktige beskjeder på forsiden – legg igjen notater til familien, fjern dem når de er lest
+- Beskjeder vises under middagsplanen i høyre kolonne (ikke full bredde under alt)
+- Emoji-velger for barns avatarer (44 emojier: ansikter, dyr og symboler)
+- Mobiloppsett-fikser på alle sider: kort flyter ikke lenger utenfor skjermen
+- Progressiv PIN-sperring: 3 feil → 1 min, 6 → 5 min, 10 → 30 min, 15+ → 2 timer
+- Funksjonsvekslere inkluderer nå viktige beskjeder
+
+## v1.5.1 – Cosmos/reverse proxy-kompatibilitet (2026-05-06)
+- Express serverer nå frontend statisk – appen bruker kun én port (`3001`)
+- API-URL er relativ (`/api`) og fungerer bak enhver reverse proxy
+- Vite dev-server proxyer `/api`-kall til `localhost:3001` automatisk
+- Ny COSMOS.md med forenklet oppsettguide
+
+## v1.5.0 – Sikkerhet og autentisering (2026-05-06)
+- Admin PIN-kode via `ADMIN_PIN`-miljøvariabel (standard `1234`)
+- Valgfri PIN-beskyttelse for startsiden (anbefalt ved internetteksponering)
+- 8-timers sesjonstoken etter innlogging
+- Rate limiting: 200 req/15 min generelt, 10 forsøk/15 min for innlogging
+- `helmet.js` for HTTP-sikkerhetshoder (CSP, HSTS, m.m.)
+- SSRF-beskyttelse: iCal-URLer valideres mot private IP-adresser
+- API-body begrenset til 16 KB
+
+## v1.4.2 – Avhengighetsoppdateringer (2026-05-06)
+- `better-sqlite3` 12.6.2→12.9.0, `dotenv` 17.2.3→17.4.2, `esbuild` 0.27.2→0.28.0
+- `node-ical` 0.25.0→0.26.1, `tsx` 4.7.0→4.21.0, `typescript-eslint` 8.54.0→8.59.2
+- Ikke oppdatert (major med breaking changes): React 18→19, Express 4→5, Tailwind 3→4
+
+## v1.4.1 – Mørk modus i barneoversikt og ny tittel (2026-05-05)
+- Mørk modus fungerer nå i barnets oppgaveliste
+- Tittel endret fra «Ukeoppgaver» til «Ukeplan for familien»
+
+## v1.4.0 – Generelt-fane og funksjonsstyring (2026-05-05)
+- Ny «Generelt»-fane i innstillinger (åpnes ved tannhjul-klikk)
+- Mørk modus-toggle i innstillinger
+- Slå av/på Oppgaveliste, Kalender og Middagsplanlegging individuelt
+- Fikset bug: tannhjul-knappen sendte MouseEvent som fane-argument
+
+## v1.3.1 – Mørk modus i innstillinger (2026-05-05)
+- Mørk modus fungerer nå fullt ut i Admin-panelet (alle faner)
+
+## v1.3.0 – Oppskriftsinspirarsjon (2026-05-05)
+- Oppskriftssøk fra matprat.no i Måltider-innstillingene (4000+ oppskrifter, cachet 24t)
+- Oppskriftskort med bilde, vanskelighetsgrad og tilberedningstid
+- Oransje lenke-ikon i ukesplanen for middager lagt til fra oppskrift
+- `recipe_url`-kolonne på `meals`-tabellen (automatisk migrering)
+
+## v1.2.0 – Middagsplanlegger (2026-05-05)
+- Middagsplanlegger på startsiden ved siden av kalenderen
+- Administrer middagsliste under Innstillinger → Måltider
+- Automatiske mat-emojier basert på navn (🌮🍕🍝🐟🍗🍔 osv.)
+- Oppdater-knapp på kalender-panelet
+
+## v1.1.1 – Sikkerhetsoppdateringer (2026-02-04)
+- Oppdatert alle avhengigheter, 0 sårbarheter
+- Vite 5.4.8→7.3.1 (fikset esbuild-sikkerhetshull)
+
+## v1.1.0 – Intelligent motivasjonssystem (2026-02-04)
+- Tipssystem som veileder barn gjennom uken basert på ukedag og progresjon
+- Meldingsikon med badge på barnekort
+- Ungdomsvennlig språk tilpasset 12–16 år
+
+## v1.0.0 – Første versjon (2026)
+- Barneprofiler, oppgavestyring, fremdriftssporing
+- Admin-panel, kalenderintegrasjon (iCal), SQLite, Docker, mørk modus

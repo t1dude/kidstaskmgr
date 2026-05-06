@@ -1,59 +1,78 @@
-# Endringslogg
+🇳🇴 [Norsk](CHANGELOG.no.md)
 
-## v1.5.1 - Cosmos/reverse proxy-kompatibilitet (2026-05-06)
-- Express serverer nå frontend statisk – appen bruker kun én port (`3001`)
-- API-URL er relativ (`/api`) og fungerer bak enhver reverse proxy
-- Vite dev-server proxyer `/api`-kall til `localhost:3001` automatisk
-- Ny COSMOS.md med forenklet oppsettguide
+# Changelog
 
-## v1.5.0 - Sikkerhet og autentisering (2026-05-06)
-- Admin PIN-kode via `ADMIN_PIN`-miljøvariabel (standard `1234`)
-- Valgfri PIN-beskyttelse for startsiden (anbefalt ved internetteksponering)
-- 8-timers sesjonstoken i sessionStorage etter innlogging
-- Rate limiting: 200 req/15 min generelt, 10 forsøk/15 min for innlogging
-- `helmet.js` for HTTP-sikkerhetshoder (CSP, HSTS, m.m.)
-- SSRF-beskyttelse: iCal-URLer valideres mot private IP-adresser
-- API-body begrenset til 16 KB
+## v1.6.0 – Norwegian/English language support (2026-05-06)
+- Language toggle button (🇬🇧/🇳🇴) in the home screen header and admin panel
+- All UI strings, day/month names, and motivational tip messages fully translated
+- Language preference stored in `localStorage`
 
-## v1.4.2 - Avhengighetsoppdateringer (2026-05-06)
+## v1.5.4 – Bug fixes (2026-05-06)
+- Fix: admin settings (feature toggles) not saving on mobile — caused by `sessionStorage` being cleared when mobile browsers background-kill tabs; switched to `localStorage`
+- Fix: Cosmos auto-update was disabled (`cosmos-auto-update` label was `"false"`)
+
+## v1.5.3 – Family messages, emoji picker, mobile improvements (2026-05-06)
+- Family messages board on the home screen — leave notes for the family, dismiss when done
+- Messages appear below the dinner plan in the right column (not full-width below everything)
+- Emoji picker for child avatars (44 emojis across faces, animals, and symbols)
+- Mobile layout fixes across all views: cards no longer overflow on small screens
+- Progressive PIN lockout: 3 failures → 1 min, 6 → 5 min, 10 → 30 min, 15+ → 2 hours
+- Feature toggles now include the family messages section
+
+## v1.5.1 – Cosmos/reverse proxy compatibility (2026-05-06)
+- Express now serves the frontend statically — single port (`3001`) for everything
+- API URL is relative (`/api`) and works behind any reverse proxy
+- Vite dev server proxies `/api` calls to `localhost:3001` automatically
+- New COSMOS.md with a simplified setup guide
+
+## v1.5.0 – Security and authentication (2026-05-06)
+- Admin PIN via `ADMIN_PIN` environment variable (default `1234`)
+- Optional PIN protection for the home screen (recommended when internet-facing)
+- 8-hour session token after login
+- Rate limiting: 200 req/15 min general, 10 login attempts/15 min
+- `helmet.js` for HTTP security headers (CSP, HSTS, etc.)
+- SSRF protection: iCal URLs validated against private IP ranges
+- API request body limited to 16 KB
+
+## v1.4.2 – Dependency updates (2026-05-06)
 - `better-sqlite3` 12.6.2→12.9.0, `dotenv` 17.2.3→17.4.2, `esbuild` 0.27.2→0.28.0
 - `node-ical` 0.25.0→0.26.1, `tsx` 4.7.0→4.21.0, `typescript-eslint` 8.54.0→8.59.2
-- Ikke oppdatert (major med breaking changes): React 18→19, Express 4→5, Tailwind 3→4
+- Not updated (major with breaking changes): React 18→19, Express 4→5, Tailwind 3→4
 
-## v1.4.1 - Mørk modus i barneoversikt og ny tittel (2026-05-05)
-- Mørk modus fungerer nå i barnets oppgaveliste
-- Tittel endret fra «Ukeoppgaver» til «Ukeplan for familien»
+## v1.4.1 – Dark mode in child view and new title (2026-05-05)
+- Dark mode now works in the child task list
+- Title changed from "Ukeoppgaver" to "Ukeplan for familien"
 
-## v1.4.0 - Generelt-fane og funksjonsstyring (2026-05-05)
-- Ny «Generelt»-fane i innstillinger (åpnes ved tannhjul-klikk)
-- Mørk modus-toggle i innstillinger
-- Slå av/på Oppgaveliste, Kalender og Middagsplanlegging individuelt
-- Fikset bug: tannhjul-knappen sendte MouseEvent som fane-argument
+## v1.4.0 – General tab and feature toggles (2026-05-05)
+- New "General" tab in settings (opens on gear icon click)
+- Dark mode toggle in settings
+- Toggle task list, calendar, and dinner planning on/off individually
+- Fixed bug: gear button was passing MouseEvent as a tab argument
 
-## v1.3.1 - Mørk modus i innstillinger (2026-05-05)
-- Mørk modus fungerer nå fullt ut i Admin-panelet (alle faner)
+## v1.3.1 – Dark mode in settings (2026-05-05)
+- Dark mode now fully works in the admin panel (all tabs)
 
-## v1.3.0 - Oppskriftsinspirarsjon (2026-05-05)
-- Oppskriftssøk fra matprat.no i Måltider-innstillingene (4000+ oppskrifter, cachet 24t)
-- Oppskriftskort med bilde, vanskelighetsgrad og tilberedningstid
-- Oransje lenke-ikon i ukesplanen for middager lagt til fra oppskrift
-- `recipe_url`-kolonne på `meals`-tabellen (automatisk migrering)
+## v1.3.0 – Recipe inspiration (2026-05-05)
+- Recipe search from matprat.no in meal settings (4000+ recipes, cached 24h)
+- Recipe cards with image, difficulty, and cooking time
+- Orange link icon in the weekly plan for meals added from a recipe
+- `recipe_url` column on the `meals` table (auto-migrated)
 
-## v1.2.0 - Middagsplanlegger (2026-05-05)
-- Middagsplanlegger på startsiden ved siden av kalenderen
-- Administrer middagsliste under Innstillinger → Måltider
-- Automatiske mat-emojier basert på navn (🌮🍕🍝🐟🍗🍔 osv.)
-- Oppdater-knapp på kalender-panelet
+## v1.2.0 – Dinner planner (2026-05-05)
+- Dinner planner on the home screen next to the calendar
+- Manage the dinner list under Settings → Meals
+- Automatic food emojis based on meal name (🌮🍕🍝🐟🍗🍔 etc.)
+- Refresh button on the calendar panel
 
-## v1.1.1 - Sikkerhetsoppdateringer (2026-02-04)
-- Oppdatert alle avhengigheter, 0 sårbarheter
-- Vite 5.4.8→7.3.1 (fikset esbuild-sikkerhetshull)
+## v1.1.1 – Security updates (2026-02-04)
+- Updated all dependencies, 0 vulnerabilities
+- Vite 5.4.8→7.3.1 (fixed esbuild security issue)
 
-## v1.1.0 - Intelligent motivasjonssystem (2026-02-04)
-- Tipssystem som veileder barn gjennom uken basert på ukedag og progresjon
-- Meldingsikon med badge på barnekort
-- Ungdomsvennlig språk tilpasset 12–16 år
+## v1.1.0 – Intelligent motivation system (2026-02-04)
+- Tips system that guides children through the week based on weekday and progress
+- Message icon with badge on child cards
+- Youth-friendly language aimed at ages 12–16
 
-## v1.0.0 - Første versjon (2026)
-- Barneprofiler, oppgavestyring, fremdriftssporing
-- Admin-panel, kalenderintegrasjon (iCal), SQLite, Docker, mørk modus
+## v1.0.0 – Initial release (2026)
+- Child profiles, task management, progress tracking
+- Admin panel, calendar integration (iCal), SQLite, Docker, dark mode

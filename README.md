@@ -1,62 +1,67 @@
+🇳🇴 [Norsk](README.no.md)
+
 # kidstaskmgr
 
-En familieapp for ukeplanlegging – oppgaver, kalender og middagsplan på én side.
+A family weekly planner – tasks, calendar, and dinner plan in one place.
 
-## Funksjoner
+## Features
 
-- Ukentlige oppgaver med fremdriftssporing per barn
-- Kalenderintegrasjon via iCal (Google Calendar, Outlook, m.fl.)
-- Middagsplanlegger med oppskriftsinspirarsjon fra matprat.no
-- Motivasjonssystem med smarte tips til barna
-- Mørk modus, funksjonsstyring og PIN-beskyttelse
-- SQLite-database – all data lagres lokalt, ingen eksterne tjenester
+- Weekly tasks with per-child progress tracking and motivational tips
+- Calendar integration via iCal (Google Calendar, Outlook, and others)
+- Dinner planner with recipe inspiration from matprat.no
+- Family messages board for quick notes on the home screen
+- Dark mode, per-feature toggles, and PIN protection
+- Norwegian and English language support
+- SQLite database – all data stored locally, no external services
 
-## Komme i gang
+## Getting started
 
-### Docker (anbefalt)
+### Docker (recommended)
 
 ```bash
 docker-compose up -d
 ```
 
-Åpne `http://localhost:3001`. Data lagres i en Docker volume og beholdes ved omstart.
+Open `http://localhost:3001`. Data is stored in a Docker volume and survives restarts.
 
 ```bash
-docker-compose down      # stopp
-docker-compose down -v   # stopp og slett all data
+docker-compose down      # stop
+docker-compose down -v   # stop and delete all data
 ```
 
-### Cosmos Cloud (hjemmeserver)
+### Cosmos Cloud (home server)
 
-Se [COSMOS.md](COSMOS.md) for oppsett bak reverse proxy med automatisk HTTPS.
+See [COSMOS.md](COSMOS.md) for setup behind a reverse proxy with automatic HTTPS.
 
-### Lokal utvikling
+### Local development
 
 ```bash
 npm install
-npm run dev:server   # Express API på port 3001
-npm run dev          # Vite frontend på port 5173 (proxyer /api automatisk)
+npm run dev:server   # Express API on port 3001
+npm run dev          # Vite frontend on port 5173 (proxies /api automatically)
 ```
 
-## Sikkerhet
+## Security
 
-Appen har innebygd PIN-beskyttelse. **Endre PIN før du publiserer på internett:**
+The app has built-in PIN protection. **Change the PIN before exposing it to the internet:**
 
 ```yaml
 # docker-compose.yml
 environment:
-  - ADMIN_PIN=ditt_hemmelige_passord
+  - ADMIN_PIN=your_secret_pin
 ```
 
-Admin-panelet krever alltid PIN. For å beskytte hele appen (anbefalt ved internetteksponering siden kalenderen vises på startsiden):
+The admin panel always requires a PIN. To protect the entire app (recommended when accessible over the internet, since the calendar is visible on the home screen):
 
-> Innstillinger → Generelt → Sikkerhet → «Krev PIN for startsiden»
+> Settings → General → Security → "Require PIN for home screen"
 
-Sesjonen varer 8 timer per nettleserfane.
+The session token lasts 8 hours and is stored in `localStorage`.
 
-## Feilsøking
+Failed login attempts trigger progressive lockouts: 3 failures → 1 min, 6 → 5 min, 10 → 30 min, 15 → 2 hours.
 
-**Port 3001 er opptatt:**
+## Troubleshooting
+
+**Port 3001 in use:**
 ```bash
 # Windows
 netstat -ano | findstr :3001
@@ -64,20 +69,20 @@ netstat -ano | findstr :3001
 lsof -i :3001
 ```
 
-**Containeren starter ikke:**
+**Container won't start:**
 ```bash
 docker-compose logs -f
 ```
 
-**Nullstill alt:**
+**Reset everything:**
 ```bash
 docker-compose down -v && docker-compose up -d --build
 ```
 
-## Endringslogg
+## Changelog
 
-Se [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md).
 
-## Lisens
+## License
 
-Privat prosjekt for familiebruk.
+Private project for family use.
