@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { CheckCircle, Star, Trophy, Sparkles } from 'lucide-react';
 import type { Task, Child } from '../lib/api';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface ChildViewProps {
   child: Child;
@@ -95,6 +96,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
     }
   }
 
+  const { t } = useLanguage();
   const dm = darkMode;
 
   return (
@@ -132,14 +134,14 @@ export function ChildView({ child, onBack }: ChildViewProps) {
               </div>
               <div className="min-w-0">
                 <h1 className={`text-xl md:text-3xl font-bold truncate ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h1>
-                <p className={`text-sm ${dm ? 'text-gray-400' : 'text-gray-600'}`}>Dine oppgaver for uken</p>
+                <p className={`text-sm ${dm ? 'text-gray-400' : 'text-gray-600'}`}>{t.tasksForWeek}</p>
               </div>
             </div>
             <button
               onClick={onBack}
               className={`flex-shrink-0 ml-2 px-3 md:px-4 py-2 rounded-lg transition-colors ${dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
-              Tilbake
+              {t.back}
             </button>
           </div>
 
@@ -147,7 +149,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Trophy className="w-6 h-6" />
-                <span className="font-bold text-lg">Ukens fremdrift</span>
+                <span className="font-bold text-lg">{t.weeklyProgress}</span>
               </div>
               <span className="text-3xl font-bold">{totalProgress}%</span>
             </div>
@@ -198,7 +200,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
 
                   <div className="flex items-center justify-between">
                     <span className={`text-lg font-semibold ${dm ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {task.completion_count} / {task.target_count} ganger
+                      {task.completion_count} / {task.target_count} {t.times}
                     </span>
                     <div className="flex gap-2">
                       <button
@@ -227,8 +229,8 @@ export function ChildView({ child, onBack }: ChildViewProps) {
 
             {tasks.length === 0 && (
               <div className={`text-center py-12 ${dm ? 'text-gray-500' : 'text-gray-500'}`}>
-                <p className="text-xl">Ingen oppgaver ennå!</p>
-                <p className="mt-2">Be voksen om å legge til oppgaver.</p>
+                <p className="text-xl">{t.noTasksYet}</p>
+                <p className="mt-2">{t.noTasksDesc}</p>
               </div>
             )}
           </div>

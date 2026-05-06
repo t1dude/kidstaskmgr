@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus } from 'lucide-react';
 import type { Child, CalendarEvent, Task, TaskCompletion, Meal, Message } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface ChildWithProgress extends Child {
   progress: number;
@@ -15,6 +16,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
+  const { t, lang, setLang } = useLanguage();
   const [children, setChildren] = useState<ChildWithProgress[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -31,6 +33,9 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
   useEffect(() => {
     loadChildrenWithProgress();
+  }, [lang]); // re-generate translated tips when language changes
+
+  useEffect(() => {
     loadCalendarEvents();
     loadMeals();
     loadMealPlan();
@@ -76,9 +81,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           }
 
           const totalCompleted = completionsData.reduce(
-            (sum, completion) => {
-              return sum + completion.completion_count;
-            },
+            (sum, completion) => sum + completion.completion_count,
             0
           );
 
@@ -94,7 +97,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             completion_count: completionsMap.get(task.id) || 0,
           }));
 
-          const tips = generateTips(tasksWithCompletions, progress);
+          const tips = generateTips(tasksWithCompletions, progress, t.tips);
 
           return { ...child, progress, tips };
         })
@@ -211,8 +214,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
   function getWeekDays(): { date: string; label: string }[] {
     const monday = new Date(getWeekStart());
-    const dayNames = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
-    return dayNames.map((label, i) => {
+    return t.weekdaysShort.map((label, i) => {
       const d = new Date(monday);
       d.setDate(d.getDate() + i);
       return { date: d.toISOString().split('T')[0], label };
@@ -225,38 +227,26 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const isToday = date.toDateString() === today.toDateString();
-    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+    if (date.toDateString() === today.toDateString()) return t.today;
+    if (date.toDateString() === tomorrow.toDateString()) return t.tomorrow;
 
-    if (isToday) return 'I dag';
-    if (isTomorrow) return 'I morgen';
-
-    const weekdays = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
-    const months = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
-
-    return `${weekdays[date.getDay()]} ${date.getDate()}. ${months[date.getMonth()]}`;
+    const weekday = t.weekdaysLong[date.getDay()];
+    const month = t.months[date.getMonth()];
+    return t.formatDate(weekday, date.getDate(), month);
   }
 
   function groupEventsByDay(events: CalendarEvent[]): Record<string, CalendarEvent[]> {
     const grouped: Record<string, CalendarEvent[]> = {};
-
     events.forEach((event) => {
-      const date = new Date(event.start);
-      const dateKey = date.toDateString();
-
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
+      const dateKey = new Date(event.start).toDateString();
+      if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(event);
     });
-
     return grouped;
   }
 
   function formatEventTime(startString: string, endString: string): string {
-    if (startString.length === 10) {
-      return 'Hele dagen';
-    }
+    if (startString.length === 10) return t.allDay;
     const startDate = new Date(startString);
     const endDate = new Date(endString);
     const startTime = startDate.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
@@ -276,7 +266,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
             darkMode ? 'bg-gray-700' : 'bg-white'
           }`}
-          title={darkMode ? 'Lys modus' : 'Mørk modus'}
+          title={darkMode ? t.lightMode : t.darkModeTitle}
         >
           {darkMode ? (
             <Sun className="w-6 h-6 text-yellow-400" />
@@ -285,11 +275,20 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           )}
         </button>
         <button
+          onClick={() => setLang(lang === 'no' ? 'en' : 'no')}
+          className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+            darkMode ? 'bg-gray-700' : 'bg-white'
+          }`}
+          title={t.switchToLanguage}
+        >
+          <span className="text-xl leading-none">{lang === 'no' ? '🇬🇧' : '🇳🇴'}</span>
+        </button>
+        <button
           onClick={() => onAdminClick()}
           className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
             darkMode ? 'bg-gray-700' : 'bg-white'
           }`}
-          title="Admin"
+          title={t.adminTitle}
         >
           <Settings className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} />
         </button>
@@ -300,7 +299,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           <h1 className={`text-4xl md:text-6xl font-bold mb-4 md:mb-8 drop-shadow-lg ${
             darkMode ? 'text-gray-100' : 'text-gray-800'
           }`}>
-            Ukeplan for familien
+            {t.appTitle}
           </h1>
         </div>
 
@@ -350,7 +349,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                     className="px-6 py-2 rounded-full text-white font-semibold"
                     style={{ backgroundColor: child.color }}
                   >
-                    Trykk for å starte
+                    {t.childStart}
                   </div>
                 </div>
               </button>
@@ -363,7 +362,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                   className={`absolute top-4 right-4 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
                     darkMode ? 'bg-blue-600' : 'bg-blue-500'
                   }`}
-                  title="Se tips"
+                  title={t.viewTips}
                 >
                   <MessageCircle className="w-6 h-6 text-white" />
                   <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
@@ -381,10 +380,10 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           }`}>
             <Users className={`w-24 h-24 mx-auto mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
             <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-              Ingen barn registrert ennå
+              {t.noChildrenTitle}
             </h2>
             <p className={`mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Bruk admin-panelet for å legge til barn og oppgaver
+              {t.noChildrenDesc}
             </p>
           </div>
         )}
@@ -395,7 +394,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <CalendarIcon className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 <h2 className={`text-lg md:text-2xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  Kommende hendelser
+                  {t.calendarTitle}
                 </h2>
               </div>
               <button
@@ -404,7 +403,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${
                   darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-500 hover:bg-blue-50'
                 } ${calendarRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title="Oppdater kalender"
+                title={t.refreshCalendar}
               >
                 <RefreshCw className={`w-5 h-5 ${calendarRefreshing ? 'animate-spin' : ''}`} />
               </button>
@@ -447,7 +446,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               </div>
             ) : (
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Ingen kommende hendelser
+                {t.noEvents}
               </p>
             )}
           </div>}
@@ -458,7 +457,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <Utensils className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
                 <h2 className={`text-lg md:text-2xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  Middagsplan
+                  {t.mealsTitle}
                 </h2>
               </div>
               <button
@@ -466,14 +465,14 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 className={`p-2 rounded-lg transition-all hover:scale-110 active:scale-95 ${
                   darkMode ? 'text-orange-400 hover:bg-gray-700' : 'text-orange-500 hover:bg-orange-50'
                 }`}
-                title="Rediger måltider"
+                title={t.editMeals}
               >
                 <Pencil className="w-5 h-5" />
               </button>
             </div>
             {meals.length === 0 ? (
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Legg til middager under Innstillinger → Måltider
+                {t.noMealsHome}
               </p>
             ) : (
               <div className="space-y-5">
@@ -506,7 +505,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                             : 'bg-white border-gray-300 text-gray-800 focus:border-orange-400'
                         } focus:outline-none focus:ring-1 focus:ring-orange-400`}
                       >
-                        <option value="">— Velg middag —</option>
+                        <option value="">{t.chooseDinner}</option>
                         {meals.map((meal) => (
                           <option key={meal.id} value={meal.id}>{meal.name}</option>
                         ))}
@@ -520,7 +519,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                             href={selectedMeal.recipe_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title="Se oppskrift på matprat.no"
+                            title={t.viewRecipeTitle}
                             className={`flex items-center justify-center w-7 h-7 rounded-md active:scale-95 ${
                               darkMode
                                 ? 'text-orange-400 bg-orange-900/40'
@@ -545,14 +544,14 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               <div className="flex items-center gap-2 mb-4">
                 <Bell className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
                 <h2 className={`text-lg md:text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  Viktige beskjeder
+                  {t.messagesTitle}
                 </h2>
               </div>
 
               <div className="space-y-2 mb-4">
                 {messages.length === 0 && (
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Ingen aktive beskjeder
+                    {t.noMessages}
                   </p>
                 )}
                 {messages.map(msg => (
@@ -567,7 +566,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                     </p>
                     <button
                       onClick={() => dismissMessage(msg.id)}
-                      title="Fjern beskjed"
+                      title={t.delete}
                       className={`flex-shrink-0 rounded-full p-1 transition-colors ${
                         darkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200' : 'hover:bg-yellow-200 text-gray-400 hover:text-gray-600'
                       }`}
@@ -581,7 +580,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Skriv en beskjed til familien..."
+                  placeholder={t.messagePlaceholder}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addMessage()}
@@ -596,7 +595,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                   onClick={addMessage}
                   disabled={!newMessage.trim()}
                   className="flex-shrink-0 p-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  title="Legg til beskjed"
+                  title={t.addMessage}
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -632,10 +631,10 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 </div>
                 <div className="min-w-0">
                   <h2 className={`text-xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                    Tips til {selectedChildTips.child.name}
+                    {t.tipsFor(selectedChildTips.child.name)}
                   </h2>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Oppgaver som trenger litt kjærlighet
+                    {t.tipsSubtitle}
                   </p>
                 </div>
               </div>
@@ -688,7 +687,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                   color: 'white',
                 }}
               >
-                Skjønner!
+                {t.understood}
               </button>
             </div>
           </div>

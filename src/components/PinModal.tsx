@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface PinModalProps {
   onSuccess: (token: string) => void;
@@ -28,6 +29,7 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
     return () => clearInterval(timer);
   }, [retryAfter]);
 
+  const { t } = useLanguage();
   const dm = darkMode;
   const isLocked = retryAfter > 0;
 
@@ -52,10 +54,10 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className={`w-full max-w-sm mx-4 rounded-2xl shadow-2xl p-8 ${dm ? 'bg-gray-800' : 'bg-white'}`}>
         <h2 className={`text-2xl font-bold mb-2 text-center ${dm ? 'text-gray-100' : 'text-gray-800'}`}>
-          PIN-kode
+          {t.pinTitle}
         </h2>
         <p className={`text-center mb-6 text-sm ${dm ? 'text-gray-400' : 'text-gray-500'}`}>
-          Skriv inn PIN-koden for å fortsette
+          {t.pinDesc}
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -63,7 +65,7 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
             inputMode="numeric"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            placeholder="PIN-kode"
+            placeholder={t.pinPlaceholder}
             autoFocus
             disabled={isLocked}
             className={`w-full text-center text-2xl tracking-widest py-3 rounded-xl border-2 outline-none focus:border-blue-500 transition-colors ${
@@ -82,7 +84,7 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
             disabled={loading || !pin.trim() || isLocked}
             className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Logger inn...' : isLocked ? `Venter (${retryAfter}s)` : 'Logg inn'}
+            {loading ? t.signingIn : isLocked ? t.waitSeconds(retryAfter) : t.signIn}
           </button>
           {canCancel && (
             <button
@@ -92,7 +94,7 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
                 dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Avbryt
+              {t.cancel}
             </button>
           )}
         </form>
