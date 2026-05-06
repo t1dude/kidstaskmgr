@@ -20,6 +20,7 @@ interface AppFeatures {
   tasks: boolean;
   calendar: boolean;
   meals: boolean;
+  messages: boolean;
 }
 
 export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
@@ -27,7 +28,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  const [features, setFeatures] = useState<AppFeatures>({ tasks: true, calendar: true, meals: true });
+  const [features, setFeatures] = useState<AppFeatures>({ tasks: true, calendar: true, meals: true, messages: true });
   const [requirePinForHome, setRequirePinForHome] = useState(false);
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -280,6 +281,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     { key: 'tasks', label: 'Oppgaveliste', desc: 'Ukentlige oppgaver og fremdrift for barna' },
     { key: 'calendar', label: 'Kalender', desc: 'Kommende hendelser fra din kalender' },
     { key: 'meals', label: 'Middagsplanlegging', desc: 'Ukentlig middagsplan på forsiden' },
+    { key: 'messages', label: 'Viktige beskjeder', desc: 'Legg igjen beskjeder til familien på forsiden' },
   ];
 
   return (

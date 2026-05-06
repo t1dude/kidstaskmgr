@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink } from 'lucide-react';
-import type { Child, CalendarEvent, Task, TaskCompletion, Meal } from '../lib/api';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus } from 'lucide-react';
+import type { Child, CalendarEvent, Task, TaskCompletion, Meal, Message } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 
 interface ChildWithProgress extends Child {
@@ -25,14 +25,17 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  const [features, setFeatures] = useState({ tasks: true, calendar: true, meals: true });
+  const [features, setFeatures] = useState({ tasks: true, calendar: true, meals: true, messages: true });
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     loadChildrenWithProgress();
     loadCalendarEvents();
     loadMeals();
     loadMealPlan();
-    api.getSettings().then(({ appFeatures }) => setFeatures(appFeatures)).catch(() => {});
+    loadMessages();
+    api.getSettings().then(({ appFeatures }) => setFeatures(f => ({ ...f, ...appFeatures }))).catch(() => {});
 
     const calendarInterval = setInterval(() => {
       loadCalendarEvents();
@@ -166,6 +169,26 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     } catch (error) {
       console.error('Failed to load meal plan', error);
     }
+  }
+
+  async function loadMessages() {
+    try { setMessages(await api.getMessages()); } catch { /* ignore */ }
+  }
+
+  async function addMessage() {
+    if (!newMessage.trim()) return;
+    try {
+      const msg = await api.createMessage(newMessage.trim());
+      setMessages(prev => [...prev, msg]);
+      setNewMessage('');
+    } catch { /* ignore */ }
+  }
+
+  async function dismissMessage(id: string) {
+    try {
+      await api.deleteMessage(id);
+      setMessages(prev => prev.filter(m => m.id !== id));
+    } catch { /* ignore */ }
   }
 
   async function setMealForDay(date: string, mealId: string) {
@@ -516,6 +539,70 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             )}
           </div>}
         </div>}
+
+        {features.messages && (
+          <div className={`rounded-2xl p-4 md:p-6 shadow-xl mb-8 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <Bell className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
+              <h2 className={`text-lg md:text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                Viktige beskjeder
+              </h2>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              {messages.length === 0 && (
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Ingen aktive beskjeder
+                </p>
+              )}
+              {messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`flex items-start gap-3 p-3 rounded-xl ${
+                    darkMode ? 'bg-gray-700' : 'bg-yellow-50 border border-yellow-200'
+                  }`}
+                >
+                  <p className={`flex-1 text-sm leading-relaxed ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                    {msg.text}
+                  </p>
+                  <button
+                    onClick={() => dismissMessage(msg.id)}
+                    title="Fjern beskjed"
+                    className={`flex-shrink-0 rounded-full p-1 transition-colors ${
+                      darkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200' : 'hover:bg-yellow-200 text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Skriv en beskjed til familien..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addMessage()}
+                maxLength={500}
+                className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
+                    : 'bg-gray-50 border-gray-300 text-gray-800'
+                }`}
+              />
+              <button
+                onClick={addMessage}
+                disabled={!newMessage.trim()}
+                className="flex-shrink-0 p-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Legg til beskjed"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {selectedChildTips && (

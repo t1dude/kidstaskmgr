@@ -62,6 +62,12 @@ export interface MealPlanEntry {
   planned_date: string;
 }
 
+export interface Message {
+  id: string;
+  text: string;
+  created_at: string;
+}
+
 export interface RecipeInspiration {
   title: string;
   url: string;
@@ -72,7 +78,7 @@ export interface RecipeInspiration {
 }
 
 export const api = {
-  async getSettings(): Promise<{ requirePinForHome: boolean; appFeatures: { tasks: boolean; calendar: boolean; meals: boolean } }> {
+  async getSettings(): Promise<{ requirePinForHome: boolean; appFeatures: { tasks: boolean; calendar: boolean; meals: boolean; messages: boolean } }> {
     const response = await fetch(`${API_URL}/settings`);
     return response.json();
   },
@@ -232,5 +238,23 @@ export const api = {
     const response = await fetch(`${API_URL}/meal-inspiration?q=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error('Failed to fetch inspiration');
     return response.json();
+  },
+
+  async getMessages(): Promise<Message[]> {
+    const response = await fetch(`${API_URL}/messages`);
+    return response.json();
+  },
+
+  async createMessage(text: string): Promise<Message> {
+    const response = await fetch(`${API_URL}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    return response.json();
+  },
+
+  async deleteMessage(id: string): Promise<void> {
+    await fetch(`${API_URL}/messages/${id}`, { method: 'DELETE' });
   },
 };

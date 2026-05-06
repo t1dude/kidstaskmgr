@@ -158,6 +158,12 @@ function initDatabase() {
       value TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,
+      text TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_task_completions_child_id ON task_completions(child_id);
     CREATE INDEX IF NOT EXISTS idx_task_completions_task_id ON task_completions(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_completions_week_start ON task_completions(week_start_date);
@@ -218,7 +224,7 @@ app.get('/api/settings', (req, res) => {
     const featuresRow = get('appFeatures');
     res.json({
       requirePinForHome: pinRow ? JSON.parse(pinRow.value) : false,
-      appFeatures: featuresRow ? JSON.parse(featuresRow.value) : { tasks: true, calendar: true, meals: true },
+      appFeatures: { tasks: true, calendar: true, meals: true, messages: true, ...(featuresRow ? JSON.parse(featuresRow.value) : {}) },
     });
   } catch { res.status(500).json({ error: 'Failed to fetch settings' }); }
 });
@@ -381,6 +387,32 @@ app.delete('/api/reset-week', requireAuth, (req, res) => {
     db.prepare('DELETE FROM task_completions').run();
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed to reset week' }); }
+});
+
+// ── Messages (public – family can add/remove) ─────────────────────────────────
+app.get('/api/messages', (req, res) => {
+  try {
+    res.json(db.prepare('SELECT * FROM messages ORDER BY created_at ASC').all());
+  } catch { res.status(500).json({ error: 'Failed to fetch messages' }); }
+});
+
+app.post('/api/messages', (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text?.trim()) return res.status(400).json({ error: 'Text is required' });
+    const id = generateId();
+    const created_at = new Date().toISOString();
+    db.prepare('INSERT INTO messages (id, text, created_at) VALUES (?, ?, ?)')
+      .run(id, text.trim().slice(0, 500), created_at);
+    res.json({ id, text: text.trim(), created_at });
+  } catch { res.status(500).json({ error: 'Failed to create message' }); }
+});
+
+app.delete('/api/messages/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM messages WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch { res.status(500).json({ error: 'Failed to delete message' }); }
 });
 
 // ── Meals ─────────────────────────────────────────────────────────────────────
