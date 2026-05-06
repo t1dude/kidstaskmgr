@@ -93,7 +93,9 @@ export const api = {
     });
     if (!response.ok) {
       const data = await response.json();
-      throw new Error(data.error || 'Feil PIN-kode');
+      const err: any = new Error(data.error || 'Feil PIN-kode');
+      if (data.retryAfter) err.retryAfter = data.retryAfter;
+      throw err;
     }
     return response.json();
   },

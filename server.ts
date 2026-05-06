@@ -5,11 +5,12 @@ import { fileURLToPath } from 'url';
 import ical from 'node-ical';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { randomBytes, randomUUID } from 'crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'crypto';
 import { lookup as dnsLookup } from 'dns/promises';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 3001;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -18,6 +19,29 @@ if (!process.env.ADMIN_PIN) {
   console.warn('⚠️  ADVARSEL: ADMIN_PIN er ikke satt – standard PIN "1234" brukes. Sett ADMIN_PIN i miljøvariablene!');
 }
 const sessions = new Map<string, Date>(); // token → expiry
+
+interface LoginAttempt { count: number; lockedUntil: number; }
+const loginAttempts = new Map<string, LoginAttempt>();
+
+function getLockoutDuration(failCount: number): number {
+  if (failCount >= 15) return 2 * 60 * 60 * 1000;
+  if (failCount >= 10) return 30 * 60 * 1000;
+  if (failCount >= 6)  return 5 * 60 * 1000;
+  if (failCount >= 3)  return 60 * 1000;
+  return 0;
+}
+
+function checkPin(input: string, expected: string): boolean {
+  try {
+    const a = Buffer.from(input.padEnd(expected.length, '\0'));
+    const b = Buffer.from(expected.padEnd(input.length, '\0'));
+    const same = a.length === b.length && timingSafeEqual(
+      Buffer.from(input.padEnd(Math.max(input.length, expected.length), '\0')),
+      Buffer.from(expected.padEnd(Math.max(input.length, expected.length), '\0')),
+    );
+    return same && input === expected;
+  } catch { return false; }
+}
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
@@ -31,11 +55,15 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Clean up expired sessions every hour
+// Clean up expired sessions and stale lockouts every hour
 setInterval(() => {
   const now = new Date();
   for (const [token, expiry] of sessions) {
     if (expiry < now) sessions.delete(token);
+  }
+  const nowMs = Date.now();
+  for (const [ip, attempt] of loginAttempts) {
+    if (attempt.lockedUntil < nowMs && attempt.count < 3) loginAttempts.delete(ip);
   }
 }, 60 * 60 * 1000);
 
@@ -208,12 +236,27 @@ app.put('/api/settings', requireAuth, (req, res) => {
 
 // ── Auth endpoints ────────────────────────────────────────────────────────────
 app.post('/api/auth/login', (req, res) => {
-  const { pin } = req.body;
-  if (!pin || pin !== ADMIN_PIN) {
-    return res.status(401).json({ error: 'Feil PIN-kode' });
+  const ip = (req.ip ?? req.socket.remoteAddress ?? 'unknown').replace(/^::ffff:/, '');
+  const now = Date.now();
+  const attempt = loginAttempts.get(ip) ?? { count: 0, lockedUntil: 0 };
+
+  if (attempt.lockedUntil > now) {
+    const retryAfter = Math.ceil((attempt.lockedUntil - now) / 1000);
+    return res.status(429).json({ error: 'For mange forsøk – prøv igjen senere', retryAfter });
   }
+
+  const { pin } = req.body;
+  if (!pin || !checkPin(String(pin), ADMIN_PIN)) {
+    attempt.count += 1;
+    attempt.lockedUntil = now + getLockoutDuration(attempt.count);
+    loginAttempts.set(ip, attempt);
+    const retryAfter = attempt.lockedUntil > now ? Math.ceil((attempt.lockedUntil - now) / 1000) : undefined;
+    return res.status(401).json({ error: 'Feil PIN-kode', ...(retryAfter ? { retryAfter } : {}) });
+  }
+
+  loginAttempts.delete(ip);
   const token = randomBytes(32).toString('hex');
-  sessions.set(token, new Date(Date.now() + 8 * 60 * 60 * 1000));
+  sessions.set(token, new Date(now + 8 * 60 * 60 * 1000));
   res.json({ token });
 });
 
