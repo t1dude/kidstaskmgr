@@ -353,7 +353,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
         </div>}
 
         {features.tasks && children.length === 0 && (
-          <div className={`rounded-3xl p-12 shadow-2xl text-center mb-8 ${
+          <div className={`rounded-3xl p-6 md:p-12 shadow-2xl text-center mb-8 ${
             darkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
             <Users className={`w-24 h-24 mx-auto mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -367,11 +367,11 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
         )}
 
         {(features.calendar || features.meals) && <div className={`grid grid-cols-1 gap-6 mb-8 ${features.calendar && features.meals ? 'md:grid-cols-2' : ''}`}>
-          {features.calendar && <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          {features.calendar && <div className={`rounded-2xl p-4 md:p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <CalendarIcon className={`w-7 h-7 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <CalendarIcon className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <h2 className={`text-lg md:text-2xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                   Kommende hendelser
                 </h2>
               </div>
@@ -429,11 +429,11 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             )}
           </div>}
 
-          {features.meals && <div className={`rounded-2xl p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          {features.meals && <div className={`rounded-2xl p-4 md:p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Utensils className={`w-7 h-7 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
-                <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Utensils className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
+                <h2 className={`text-lg md:text-2xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                   Middagsplan
                 </h2>
               </div>
@@ -476,7 +476,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                       <select
                         value={selectedMealId}
                         onChange={(e) => setMealForDay(day.date, e.target.value)}
-                        className={`flex-1 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                        className={`flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                           darkMode
                             ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-orange-400'
                             : 'bg-white border-gray-300 text-gray-800 focus:border-orange-400'
@@ -524,15 +524,15 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           onClick={() => setSelectedChildTips(null)}
         >
           <div
-            className={`rounded-3xl p-8 max-w-2xl w-full shadow-2xl ${
+            className={`rounded-3xl p-5 md:p-8 max-w-2xl w-full shadow-2xl ${
               darkMode ? 'bg-gray-800' : 'bg-white'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg"
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg flex-shrink-0"
                   style={{
                     backgroundColor: selectedChildTips.child.color + '20',
                     borderWidth: 3,
@@ -541,8 +541,8 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 >
                   {selectedChildTips.child.avatar_emoji}
                 </div>
-                <div>
-                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                <div className="min-w-0">
+                  <h2 className={`text-xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                     Tips til {selectedChildTips.child.name}
                   </h2>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -552,7 +552,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               </div>
               <button
                 onClick={() => setSelectedChildTips(null)}
-                className={`rounded-full p-2 transition-colors ${
+                className={`flex-shrink-0 ml-2 rounded-full p-2 transition-colors ${
                   darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                 }`}
               >
