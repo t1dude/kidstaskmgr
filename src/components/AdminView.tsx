@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
 import { Plus, Trash2, Settings, Edit, Check, X, Search, ExternalLink, Loader2 } from 'lucide-react';
 import type { Task, Child, Meal, RecipeInspiration } from '../lib/api';
+
+const AVATAR_EMOJIS = [
+  '😊','😄','😎','🥳','😇','🤩','🥰','😜','😆','🤗','😏','🤓',
+  '👦','👧','🧒','👶','🧑',
+  '🐱','🐶','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🦄','🐙',
+  '🌟','⭐','🌈','🎮','⚽','🏀','🎨','🎵','🚀','🎉','🏆','🦋',
+];
 
 interface AdminViewProps {
   onBack: () => void;
@@ -38,6 +45,20 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   const [inspirationLoading, setInspirationLoading] = useState(false);
   const [inspirationError, setInspirationError] = useState<string | null>(null);
   const [addedRecipes, setAddedRecipes] = useState<Set<string>>(new Set());
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!emojiPickerOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node))
+        setEmojiPickerOpen(false);
+    }
+    function handleEsc(e: KeyboardEvent) { if (e.key === 'Escape') setEmojiPickerOpen(false); }
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('keydown', handleEsc);
+    return () => { document.removeEventListener('mousedown', handleOutside); document.removeEventListener('keydown', handleEsc); };
+  }, [emojiPickerOpen]);
 
   useEffect(() => {
     loadTasks();
@@ -427,8 +448,30 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                   <input type="text" placeholder="Navn" value={newChild.name} onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
                     className={`flex-1 ${inputClass}`} />
                   <div className="flex gap-2">
-                    <input type="text" placeholder="Emoji" value={newChild.avatar_emoji} onChange={(e) => setNewChild({ ...newChild, avatar_emoji: e.target.value })}
-                      className={`w-16 px-2 py-2 border rounded-lg text-center text-2xl focus:outline-none ${dm ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'}`} />
+                    <div ref={emojiPickerRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+                        className={`w-12 h-11 border rounded-lg text-2xl focus:outline-none focus:ring-2 focus:ring-green-400 ${dm ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
+                        title="Velg ikon"
+                      >
+                        {newChild.avatar_emoji}
+                      </button>
+                      {emojiPickerOpen && (
+                        <div className={`absolute z-50 top-full mt-1 left-0 w-64 p-2 rounded-xl shadow-2xl border grid grid-cols-6 gap-1 max-h-52 overflow-y-auto ${dm ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}`}>
+                          {AVATAR_EMOJIS.map(emoji => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => { setNewChild({ ...newChild, avatar_emoji: emoji }); setEmojiPickerOpen(false); }}
+                              className={`text-2xl p-1 rounded-lg transition-transform hover:scale-125 ${newChild.avatar_emoji === emoji ? (dm ? 'bg-blue-600' : 'bg-blue-100') : (dm ? 'hover:bg-gray-700' : 'hover:bg-gray-100')}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <input type="color" value={newChild.color} onChange={(e) => setNewChild({ ...newChild, color: e.target.value })}
                       className={`w-12 h-11 border rounded-lg cursor-pointer ${dm ? 'bg-gray-700 border-gray-600' : 'border-gray-300'}`} />
                     <button onClick={addChild} className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
