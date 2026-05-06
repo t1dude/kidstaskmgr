@@ -215,6 +215,24 @@ docker-compose up -d --build
 
 ## Versjonshistorikk
 
+### v1.4.2 - Avhengighetsoppdateringer (2026-05-06)
+
+**Oppdaterte pakker (minor/patch):**
+- `better-sqlite3`: 12.6.2 → 12.9.0
+- `dotenv`: 17.2.3 → 17.4.2
+- `esbuild`: 0.27.2 → 0.28.0
+- `node-ical`: 0.25.0 → 0.26.1
+- `tsx`: 4.7.0 → 4.21.0
+- `typescript-eslint`: 8.54.0 → 8.59.2
+- `autoprefixer`: 10.4.24 → 10.5.0
+- `postcss`: 8.5.6 → 8.5.14
+- `eslint-plugin-react-refresh`: 0.5.0 → 0.5.2
+- `@types/better-sqlite3`: 7.6.8 → 7.6.13
+- `@types/cors`: 2.8.17 → 2.8.19
+
+**Ikke oppdatert (major-hopp med breaking changes):**
+- React 18 → 19, Express 4 → 5, Tailwind CSS 3 → 4, TypeScript 5 → 6, Vite 7 → 8
+
 ### v1.4.1 - Mørk modus i barneoversikt og ny tittel (2026-05-05)
 
 **Forbedringer:**
