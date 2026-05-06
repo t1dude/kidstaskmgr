@@ -5,9 +5,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 interface PinModalProps {
   onSuccess: (token: string) => void;
   onCancel: () => void;
+  canCancel?: boolean;
 }
 
-export function PinModal({ onSuccess, onCancel }: PinModalProps) {
+export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProps) {
   const [darkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -75,15 +76,17 @@ export function PinModal({ onSuccess, onCancel }: PinModalProps) {
           >
             {loading ? 'Logger inn...' : 'Logg inn'}
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-              dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Avbryt
-          </button>
+          {canCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Avbryt
+            </button>
+          )}
         </form>
       </div>
     </div>

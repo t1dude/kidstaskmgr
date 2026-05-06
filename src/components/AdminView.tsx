@@ -30,6 +30,10 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     return saved ? JSON.parse(saved) : false;
   });
   const [features, setFeatures] = useState<AppFeatures>(getDefaultFeatures);
+  const [requirePinForHome, setRequirePinForHome] = useState(() => {
+    const saved = localStorage.getItem('requirePinForHome');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
@@ -64,6 +68,12 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     const next = { ...features, [key]: !features[key] };
     setFeatures(next);
     localStorage.setItem('appFeatures', JSON.stringify(next));
+  }
+
+  function toggleRequirePinForHome() {
+    const next = !requirePinForHome;
+    setRequirePinForHome(next);
+    localStorage.setItem('requirePinForHome', JSON.stringify(next));
   }
 
   async function loadTasks() {
@@ -315,6 +325,18 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                       <Toggle value={features[key]} onToggle={() => toggleFeature(key)} />
                     </div>
                   ))}
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-lg ${dm ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <h3 className={`font-semibold mb-1 ${labelText}`}>Sikkerhet</h3>
+                <p className={`text-sm mb-3 ${mutedText}`}>Innstillinger for tilgangskontroll.</p>
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className={`font-medium ${bodyText}`}>Krev PIN for startsiden</p>
+                    <p className={`text-sm ${mutedText}`}>Beskytter hele appen med PIN – anbefalt når appen er tilgjengelig over internett</p>
+                  </div>
+                  <Toggle value={requirePinForHome} onToggle={toggleRequirePinForHome} />
                 </div>
               </div>
             </div>

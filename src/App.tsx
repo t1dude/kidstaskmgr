@@ -8,12 +8,19 @@ import type { Child } from './lib/api';
 type View = 'home' | 'child' | 'admin';
 type AdminTab = 'settings' | 'tasks' | 'children' | 'calendar' | 'meals';
 
+function needsHomePin(): boolean {
+  const requirePin = localStorage.getItem('requirePinForHome');
+  if (!requirePin || !JSON.parse(requirePin)) return false;
+  return !sessionStorage.getItem('adminToken');
+}
+
 function App() {
   const [currentView, setCurrentView] = useState<View>('home');
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [adminInitialTab, setAdminInitialTab] = useState<AdminTab>('settings');
   const [showPinModal, setShowPinModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<AdminTab>('settings');
+  const [homeUnlocked, setHomeUnlocked] = useState(() => !needsHomePin());
 
   function handleSelectChild(child: Child) {
     setSelectedChild(child);
@@ -38,9 +45,23 @@ function App() {
 
   function handlePinSuccess(token: string) {
     sessionStorage.setItem('adminToken', token);
-    setShowPinModal(false);
-    setAdminInitialTab(pendingTab);
-    setCurrentView('admin');
+    if (!homeUnlocked) {
+      setHomeUnlocked(true);
+    } else {
+      setShowPinModal(false);
+      setAdminInitialTab(pendingTab);
+      setCurrentView('admin');
+    }
+  }
+
+  if (!homeUnlocked) {
+    return (
+      <PinModal
+        onSuccess={handlePinSuccess}
+        onCancel={() => {}}
+        canCancel={false}
+      />
+    );
   }
 
   return (
