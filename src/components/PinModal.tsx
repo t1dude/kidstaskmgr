@@ -1,6 +1,5 @@
 import { useState } from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import { api } from '../lib/api';
 
 interface PinModalProps {
   onSuccess: (token: string) => void;
@@ -25,21 +24,11 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin }),
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || 'Feil PIN-kode');
-        setPin('');
-        return;
-      }
-      const { token } = await response.json();
+      const { token } = await api.login(pin);
       onSuccess(token);
-    } catch {
-      setError('Kunne ikke koble til serveren');
+    } catch (err: any) {
+      setError(err?.message || 'Kunne ikke koble til serveren');
+      setPin('');
     } finally {
       setLoading(false);
     }
