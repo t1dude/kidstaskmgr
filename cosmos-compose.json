@@ -12,7 +12,7 @@
   "minVersion": "0.7.6",
   "services": {
     "{ServiceName}": {
-      "image": "kidstaskmgr:latest",
+      "image": "ghcr.io/t1dude/kidstaskmgr:latest",
       "container_name": "{ServiceName}",
       "restart": "unless-stopped",
       "environment": [
