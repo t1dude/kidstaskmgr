@@ -72,12 +72,12 @@ export interface RecipeInspiration {
 }
 
 export const api = {
-  async getSettings(): Promise<{ requirePinForHome: boolean }> {
+  async getSettings(): Promise<{ requirePinForHome: boolean; appFeatures: { tasks: boolean; calendar: boolean; meals: boolean } }> {
     const response = await fetch(`${API_URL}/settings`);
     return response.json();
   },
 
-  async updateSettings(data: { requirePinForHome: boolean }): Promise<void> {
+  async updateSettings(data: Partial<{ requirePinForHome: boolean; appFeatures: { tasks: boolean; calendar: boolean; meals: boolean } }>): Promise<void> {
     await fetch(`${API_URL}/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },

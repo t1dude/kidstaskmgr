@@ -25,20 +25,14 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  const [features] = useState(() => {
-    try {
-      const saved = localStorage.getItem('appFeatures');
-      return saved ? JSON.parse(saved) : { tasks: true, calendar: true, meals: true };
-    } catch {
-      return { tasks: true, calendar: true, meals: true };
-    }
-  });
+  const [features, setFeatures] = useState({ tasks: true, calendar: true, meals: true });
 
   useEffect(() => {
     loadChildrenWithProgress();
     loadCalendarEvents();
     loadMeals();
     loadMealPlan();
+    api.getSettings().then(({ appFeatures }) => setFeatures(appFeatures)).catch(() => {});
 
     const calendarInterval = setInterval(() => {
       loadCalendarEvents();

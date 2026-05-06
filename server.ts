@@ -185,16 +185,23 @@ app.use('/api/auth/', authLimiter);
 // ── App settings (public read, auth write) ────────────────────────────────────
 app.get('/api/settings', (req, res) => {
   try {
-    const row = db.prepare("SELECT value FROM app_settings WHERE key = 'requirePinForHome'").get() as any;
-    res.json({ requirePinForHome: row ? JSON.parse(row.value) : false });
+    const get = (key: string) => db.prepare('SELECT value FROM app_settings WHERE key = ?').get(key) as any;
+    const pinRow = get('requirePinForHome');
+    const featuresRow = get('appFeatures');
+    res.json({
+      requirePinForHome: pinRow ? JSON.parse(pinRow.value) : false,
+      appFeatures: featuresRow ? JSON.parse(featuresRow.value) : { tasks: true, calendar: true, meals: true },
+    });
   } catch { res.status(500).json({ error: 'Failed to fetch settings' }); }
 });
 
 app.put('/api/settings', requireAuth, (req, res) => {
   try {
-    const { requirePinForHome } = req.body;
-    if (typeof requirePinForHome !== 'boolean') return res.status(400).json({ error: 'Invalid value' });
-    db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('requirePinForHome', ?)").run(JSON.stringify(requirePinForHome));
+    const { requirePinForHome, appFeatures } = req.body;
+    const upsert = (key: string, value: unknown) =>
+      db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)').run(key, JSON.stringify(value));
+    if (typeof requirePinForHome === 'boolean') upsert('requirePinForHome', requirePinForHome);
+    if (appFeatures && typeof appFeatures === 'object') upsert('appFeatures', appFeatures);
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed to save settings' }); }
 });

@@ -15,21 +15,12 @@ interface AppFeatures {
   meals: boolean;
 }
 
-function getDefaultFeatures(): AppFeatures {
-  try {
-    const saved = localStorage.getItem('appFeatures');
-    return saved ? JSON.parse(saved) : { tasks: true, calendar: true, meals: true };
-  } catch {
-    return { tasks: true, calendar: true, meals: true };
-  }
-}
-
 export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  const [features, setFeatures] = useState<AppFeatures>(getDefaultFeatures);
+  const [features, setFeatures] = useState<AppFeatures>({ tasks: true, calendar: true, meals: true });
   const [requirePinForHome, setRequirePinForHome] = useState(false);
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -53,7 +44,10 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     loadChildren();
     loadCalendarSettings();
     loadMeals();
-    api.getSettings().then(({ requirePinForHome }) => setRequirePinForHome(requirePinForHome)).catch(() => {});
+    api.getSettings().then(({ requirePinForHome, appFeatures }) => {
+      setRequirePinForHome(requirePinForHome);
+      setFeatures(appFeatures);
+    }).catch(() => {});
   }, []);
 
   function toggleDarkMode() {
@@ -62,10 +56,14 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     localStorage.setItem('darkMode', JSON.stringify(next));
   }
 
-  function toggleFeature(key: keyof AppFeatures) {
+  async function toggleFeature(key: keyof AppFeatures) {
     const next = { ...features, [key]: !features[key] };
     setFeatures(next);
-    localStorage.setItem('appFeatures', JSON.stringify(next));
+    try {
+      await api.updateSettings({ appFeatures: next });
+    } catch {
+      setFeatures(features);
+    }
   }
 
   async function toggleRequirePinForHome() {
