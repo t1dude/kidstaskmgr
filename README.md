@@ -22,7 +22,7 @@ Dette er den enkleste måten å kjøre applikasjonen uten noen eksterne avhengig
 #### Forutsetninger
 
 - Docker Desktop installert på maskinen din
-- Ingen andre tjenester som bruker port 3001 og 4173
+- Ingen annen tjeneste som bruker port 3001
 
 #### Start applikasjonen
 
@@ -32,7 +32,7 @@ Dette er den enkleste måten å kjøre applikasjonen uten noen eksterne avhengig
    ```
 
 2. **Åpne applikasjonen:**
-   - Gå til `http://localhost:4173` i nettleseren din
+   - Gå til `http://localhost:3001` i nettleseren din
    - Appen kjører nå helt lokalt på maskinen din
 
 3. **Stopp applikasjonen:**
@@ -86,8 +86,8 @@ Hvis du vil utvikle eller endre koden, kan du kjøre applikasjonen lokalt.
    ```
 
 4. **Åpne applikasjonen:**
-   - Frontend: `http://localhost:5173`
-   - Backend API: `http://localhost:3001`
+   - Frontend: `http://localhost:5173` (Vite proxyer `/api`-kall til port 3001)
+   - Backend API: `http://localhost:3001/api`
 
 ## Bruk av applikasjonen
 
@@ -185,16 +185,14 @@ All data lagres lokalt på din maskin - ingen data sendes til eksterne tjenester
 
 ### Port-konflikter
 
-Hvis du får en feilmelding om at porter er opptatt:
+Hvis du får en feilmelding om at port 3001 er opptatt:
 
 ```bash
 # På Windows
 netstat -ano | findstr :3001
-netstat -ano | findstr :4173
 
 # På Mac/Linux
 lsof -i :3001
-lsof -i :4173
 ```
 
 ### Containeren starter ikke
@@ -214,6 +212,14 @@ docker-compose up -d --build
 ```
 
 ## Versjonshistorikk
+
+### v1.5.1 - Cosmos/reverse proxy-kompatibilitet (2026-05-06)
+
+**Forbedringer:**
+- Express serverer nå frontend-filene statisk – appen bruker kun én port (`3001`)
+- API-URL er nå relativ (`/api`) og fungerer dermed riktig bak en hvilken som helst reverse proxy
+- Vite dev-server proxyer `/api`-kall til `localhost:3001` automatisk
+- Oppdatert COSMOS.md med forenklet og fungerende oppsettguide
 
 ### v1.5.0 - Sikkerhet og autentisering (2026-05-06)
 

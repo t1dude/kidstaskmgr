@@ -1,234 +1,121 @@
 # Kjøre appen i Cosmos Cloud
 
-Denne guiden viser deg hvordan du kjører Family Task Tracker i Cosmos Cloud på din hjemmeserver.
+Appen eksponerer én enkelt port (`3001`) som håndterer både API og frontend. Det gjør den enkel å sette opp bak Cosmos' reverse proxy.
 
 ## Forutsetninger
 
-- Cosmos Cloud installert og kjørende
-- Docker installert på serveren din
-- Grunnleggende kunnskap om Cosmos-grensesnittet
+- Cosmos Cloud installert og kjørende på hjemmeserveren din
+- Tilgang til serveren via SSH eller Cosmos-terminalen
 
-## Oppsett i Cosmos
+## Oppsett
 
-### 1. Bygg Docker-image
-
-Først må du bygge Docker-imaget. Dette kan gjøres på to måter:
-
-#### Alternativ A: Bygg på serveren din
-
-Hvis du har tilgang til serveren via SSH:
+### 1. Bygg Docker-image på serveren
 
 ```bash
-# Naviger til prosjektmappen
-cd /path/to/family-task-tracker
+# Klon eller kopier prosjektet til serveren
+git clone https://github.com/t1dude/kidstaskmgr.git
+cd kidstaskmgr
 
-# Bygg Docker-imaget
-docker build -t family-task-tracker:latest .
+# Bygg imaget
+docker build -t kidstaskmgr:latest .
 ```
 
-#### Alternativ B: Bygg lokalt og overfør
-
-Hvis du bygger på en annen maskin:
+Eller bygg lokalt og overfør:
 
 ```bash
-# Bygg imaget
-docker build -t family-task-tracker:latest .
+# Lokalt
+docker build -t kidstaskmgr:latest .
+docker save kidstaskmgr:latest | gzip > kidstaskmgr.tar.gz
 
-# Lagre imaget til en fil
-docker save family-task-tracker:latest > family-task-tracker.tar
+# Kopier til server
+scp kidstaskmgr.tar.gz bruker@server:/tmp/
 
-# Overfør filen til serveren (via SCP, USB, etc.)
-scp family-task-tracker.tar bruker@server:/tmp/
-
-# På serveren: Last inn imaget
-ssh bruker@server
-docker load < /tmp/family-task-tracker.tar
+# På serveren
+docker load < /tmp/kidstaskmgr.tar.gz
 ```
 
 ### 2. Opprett applikasjon i Cosmos
 
-1. Logg inn på Cosmos Cloud-grensesnittet
-2. Gå til **Servitør** (Servitor) > **Ny applikasjon**
-3. Velg **Custom Docker Container**
-
-### 3. Konfigurasjon
+1. Logg inn på Cosmos-grensesnittet
+2. Gå til **Apps** > **Add App** > **Custom Container**
 
 #### Container Settings:
-
-- **Image**: `family-task-tracker:latest`
-- **Container Name**: `family-task-tracker`
+- **Image**: `kidstaskmgr:latest`
+- **Container Name**: `kidstaskmgr`
 - **Restart Policy**: `unless-stopped`
 
-#### Network Settings:
-
-- **Network Mode**: `Bridge` (standard)
-- **Ports**:
-  - Host Port: `3001` → Container Port: `3001` (API)
-  - Host Port: `4173` → Container Port: `4173` (Web UI)
+#### Network / Ports:
+- **Intern port**: `3001`  
+  *(Cosmos setter opp reverse proxy mot denne porten)*
 
 #### Environment Variables:
-
-```
-NODE_ENV=production
-DB_PATH=/app/data/tasks.db
-PORT=3001
-```
+| Variabel | Verdi | Beskrivelse |
+|----------|-------|-------------|
+| `NODE_ENV` | `production` | Node-miljø |
+| `DB_PATH` | `/app/data/tasks.db` | Sti til databasefilen |
+| `PORT` | `3001` | API-port |
+| `ADMIN_PIN` | `ditt_valgte_passord` | PIN for admin-panelet – **endre dette!** |
 
 #### Volumes:
+Kritisk: uten dette volume mister du alle data ved omstart.
 
-Det er **kritisk viktig** å mappe et volume for databasen, ellers vil alle data forsvinne når containeren restartes!
-
-- **Type**: Volume eller Bind Mount
 - **Container Path**: `/app/data`
-- **Host Path**: Velg en passende lokasjon på serveren, f.eks.:
-  - `/srv/cosmos/volumes/family-task-tracker/data` (anbefalt for Cosmos)
-  - Eller bruk Cosmos' volume-manager til å opprette et navngitt volume
+- **Host Path**: `/srv/cosmos/volumes/kidstaskmgr/data` (eller annet fast sted)
 
-#### Health Check:
+### 3. Sett opp reverse proxy i Cosmos
 
-Cosmos vil automatisk bruke HEALTHCHECK som er definert i Dockerfile. Hvis du vil overstyre:
+1. Gå til **URLs / Proxy** i Cosmos
+2. Legg til nytt domene, f.eks. `tasks.dinserver.no`
+3. Pek mot container port `3001`
+4. Aktiver **HTTPS** – Cosmos håndterer sertifikater automatisk
 
-- **Command**: `node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"`
-- **Interval**: `30s`
-- **Timeout**: `3s`
-- **Retries**: `3`
+Appen er nå tilgjengelig på `https://tasks.dinserver.no`.
 
-### 4. Sikkerhet og tilgang
+## Sikkerhet
 
-#### Anbefalt oppsett:
+Appen har innebygd PIN-beskyttelse:
 
-1. **Bruk Cosmos' reverse proxy**:
-   - Aktiver HTTPS via Cosmos
-   - Sett opp et passende domenenavn (f.eks. `tasks.dinserver.local`)
-   - La Cosmos håndtere SSL-sertifikater
+- **Admin-panelet** krever alltid PIN (satt via `ADMIN_PIN`)
+- **Startsiden** kan også PIN-beskyttes: gå til innstillinger → Generelt → Sikkerhet → «Krev PIN for startsiden» – anbefalt når appen er åpen på internett siden kalenderen din vises der
 
-2. **Sikkerhetsvurdering**:
-   - Appen har **ingen innebygd autentisering**
-   - Hvis du eksponerer appen utenfor hjemmenettverket, bør du:
-     - Bruke Cosmos' innebygde autentisering
-     - Eller sette opp en ekstra autentiseringsløsning
-     - Eller kun gi tilgang via VPN
+Siden kalenderinnhold kan være personlig, anbefales det å aktivere PIN for startsiden når appen er eksponert.
 
-3. **Nettverk**:
-   - For kun lokal tilgang: La portene være interne i Cosmos
-   - For ekstern tilgang: Bruk Cosmos' secure proxy med autentisering
+## Backup av database
 
-## Vedlikehold
+Databasefilen ligger på `<host-path>/tasks.db`.
 
-### Backup av database
-
-Databasefilen ligger i `/app/data/tasks.db` (eller din mappede host-path).
-
-**Automatisk backup med Cosmos**:
+**Automatisk backup via Cosmos:**
 1. Gå til Cosmos' backup-innstillinger
-2. Legg til volumet/mappen i backup-planen
-3. Sett ønsket backup-frekvens
+2. Legg til `/srv/cosmos/volumes/kidstaskmgr/data` i backup-planen
 
-**Manuell backup**:
+**Manuell backup:**
 ```bash
-# På serveren
-cp /srv/cosmos/volumes/family-task-tracker/data/tasks.db /path/to/backup/tasks-$(date +%Y%m%d).db
+cp /srv/cosmos/volumes/kidstaskmgr/data/tasks.db ~/backup/tasks-$(date +%Y%m%d).db
 ```
 
-### Oppdatering av appen
-
-Når du har en ny versjon:
+## Oppdatering
 
 ```bash
-# Bygg nytt image
-docker build -t family-task-tracker:latest .
-
-# Stopp containeren i Cosmos
-# (via Cosmos UI eller:)
-docker stop family-task-tracker
-
-# Fjern gammel container
-docker rm family-task-tracker
-
-# Start på nytt fra Cosmos UI
-# Cosmos vil automatisk bruke det nye imaget
+cd kidstaskmgr
+git pull
+docker build -t kidstaskmgr:latest .
 ```
 
-### Overvåking og logging
-
-- **Health endpoint**: `http://localhost:3001/health`
-- **Logger**: Se container-logger i Cosmos UI
-- **Database-størrelse**: Overvåk størrelsen på `/app/data/tasks.db`
+Deretter restart containeren via Cosmos UI.
 
 ## Feilsøking
 
-### Containeren starter ikke
+**Health-sjekk:**
+```bash
+curl http://localhost:3001/health
+```
 
-1. Sjekk logs i Cosmos:
-   ```bash
-   docker logs family-task-tracker
-   ```
+**Logger:**
+```bash
+docker logs kidstaskmgr
+```
 
-2. Verifiser at volumes er korrekt mappet:
-   ```bash
-   docker inspect family-task-tracker | grep -A 10 Mounts
-   ```
-
-### Database-problemer
-
-1. Sjekk at data-mappen eksisterer og har riktige rettigheter:
-   ```bash
-   ls -la /srv/cosmos/volumes/family-task-tracker/data/
-   ```
-
-2. Hvis databasen er korrupt, gjenopprett fra backup:
-   ```bash
-   cp /path/to/backup/tasks-YYYYMMDD.db /srv/cosmos/volumes/family-task-tracker/data/tasks.db
-   # Restart containeren i Cosmos
-   ```
-
-### Tilkoblingsproblemer
-
-1. Verifiser at portene er eksponert:
-   ```bash
-   docker port family-task-tracker
-   ```
-
-2. Test health endpoint:
-   ```bash
-   curl http://localhost:3001/health
-   ```
-
-3. Sjekk Cosmos' reverse proxy-innstillinger hvis du bruker et custom domene
-
-## Cosmos-spesifikke fordeler
-
-- **Automatisk SSL**: Cosmos håndterer HTTPS-sertifikater automatisk
-- **Enkel oppdatering**: Oppdater via Cosmos UI uten kommandolinje
-- **Integrert overvåking**: Se container-status og ressursbruk
-- **Backup-integrasjon**: Bruk Cosmos' innebygde backup-løsninger
-- **Autentisering**: Legg til sikkerhet via Cosmos' auth-system
-
-## Miljøvariabler (valgfritt)
-
-Hvis du trenger å tilpasse:
-
-| Variabel | Standard | Beskrivelse |
-|----------|----------|-------------|
-| `NODE_ENV` | `production` | Node miljø |
-| `DB_PATH` | `/app/data/tasks.db` | Sti til database-fil |
-| `PORT` | `3001` | Port for API-server |
-
-## Sikkerhetsvurdering
-
-Appen er designet for hjemmebruk og har:
-- ✅ Kjører som non-root bruker i containeren
-- ✅ Ingen external dependencies (bortsett fra valgfri iCal URL)
-- ✅ Lokal SQLite-database (ingen ekstern database-tilkobling nødvendig)
-- ❌ Ingen innebygd brukerautentisering
-- ❌ Ingen kryptering av data i hvile (standard SQLite)
-
-**Anbefaling**: Bruk Cosmos' autentiseringsmekanismer hvis appen skal være tilgjengelig utenfor lokalt nettverk.
-
-## Support
-
-Hvis du har problemer:
-1. Sjekk container-logger i Cosmos
-2. Verifiser at volumes er korrekt konfigurert
-3. Test health endpoint
-4. Sjekk at alle porter er korrekt mappet
+**Database-rettigheter:**
+```bash
+ls -la /srv/cosmos/volumes/kidstaskmgr/data/
+```
