@@ -21,7 +21,7 @@ function App() {
   useEffect(() => {
     api.getSettings()
       .then(({ requirePinForHome }) => {
-        const hasToken = !!sessionStorage.getItem('adminToken');
+        const hasToken = !!localStorage.getItem('adminToken');
         setHomeUnlocked(!requirePinForHome || hasToken);
       })
       .catch(() => setHomeUnlocked(true))
@@ -39,7 +39,7 @@ function App() {
   }
 
   function handleAdminClick(tab: AdminTab = 'settings') {
-    const token = sessionStorage.getItem('adminToken');
+    const token = localStorage.getItem('adminToken');
     if (token) {
       setAdminInitialTab(tab);
       setCurrentView('admin');
@@ -50,7 +50,7 @@ function App() {
   }
 
   function handlePinSuccess(token: string) {
-    sessionStorage.setItem('adminToken', token);
+    localStorage.setItem('adminToken', token);
     if (!homeUnlocked) {
       setHomeUnlocked(true);
     } else {

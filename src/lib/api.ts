@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 function authHeaders(): Record<string, string> {
-  const token = sessionStorage.getItem('adminToken');
+  const token = localStorage.getItem('adminToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -84,11 +84,12 @@ export const api = {
   },
 
   async updateSettings(data: Partial<{ requirePinForHome: boolean; appFeatures: { tasks: boolean; calendar: boolean; meals: boolean } }>): Promise<void> {
-    await fetch(`${API_URL}/settings`, {
+    const response = await fetch(`${API_URL}/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
+    if (!response.ok) throw new Error('Failed to update settings');
   },
 
   async login(pin: string): Promise<{ token: string }> {
