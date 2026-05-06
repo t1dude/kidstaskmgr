@@ -1,42 +1,44 @@
-# Kjøre appen i Cosmos Cloud
+🇳🇴 [Norsk](COSMOS.no.md)
 
-Docker-imaget bygges automatisk og publiseres til GitHub Container Registry hver gang koden oppdateres.
+# Running the app in Cosmos Cloud
 
-## Steg 1: Importer cosmos-compose.json
+The Docker image is built automatically and published to GitHub Container Registry every time the code is updated.
 
-1. Logg inn i Cosmos
-2. Gå til **Apps** → **New app** → **Compose**
-3. Last opp eller lim inn innholdet fra `cosmos-compose.json`
-4. Cosmos ber deg fylle inn **Admin PIN-kode** – endre fra `1234` til noe du velger selv
-5. Velg et domenenavn for appen (f.eks. `ukeplan.dinserver.no`)
-6. Klikk **Create** – Cosmos laster ned imaget og setter opp container, volume og reverse proxy
+## Step 1: Import cosmos-compose.json
 
-> **Første gang:** Etter at GitHub Action har kjørt første gang, må du gå til  
-> **github.com → Packages → kidstaskmgr → Package settings** og sette pakken til **Public**  
-> slik at Cosmos kan laste den ned uten innlogging.
+1. Log in to Cosmos
+2. Go to **Apps** → **New app** → **Compose**
+3. Upload or paste the contents of `cosmos-compose.json`
+4. Cosmos will ask you to enter an **Admin PIN** — change it from `1234` to something of your choice
+5. Choose a domain name for the app (e.g. `weeklyplan.yourserver.com`)
+6. Click **Create** — Cosmos downloads the image and sets up the container, volume, and reverse proxy
 
-## Sikkerhet etter oppsett
+> **First time only:** After the GitHub Action has run for the first time, go to  
+> **github.com → Packages → kidstaskmgr → Package settings** and set the package to **Public**  
+> so Cosmos can pull it without authentication.
 
-- **Admin-panelet** krever alltid PIN
-- For å beskytte hele appen (anbefalt siden kalenderen vises på startsiden):  
-  Innstillinger → Generelt → Sikkerhet → «Krev PIN for startsiden»
+## Security after setup
 
-## Oppdatering
+- The **admin panel** always requires a PIN
+- To protect the entire app (recommended since the calendar is visible on the home screen):  
+  Settings → General → Security → "Require PIN for home screen"
 
-Push til `main`-grenen → GitHub bygger nytt image automatisk → restart containeren i Cosmos UI for å hente siste versjon.
+## Updating
 
-## Backup av data
+Push to the `main` branch → GitHub builds a new image automatically → Cosmos pulls and restarts the container automatically (auto-update is enabled in `cosmos-compose.json`).
 
-All data ligger i Docker-volumet `ukeplan-data` (eller det navnet du valgte). Legg til dette i Cosmos' backup-oppsett, eller ta manuell backup:
+## Backing up data
+
+All data lives in the Docker volume `{ServiceName}-data`. Add it to Cosmos' backup configuration, or take a manual backup:
 
 ```bash
 docker run --rm -v ukeplan-data:/data -v $(pwd):/backup alpine \
   tar czf /backup/kidstaskmgr-$(date +%Y%m%d).tar.gz /data
 ```
 
-## Feilsøking
+## Troubleshooting
 
 ```bash
-docker logs ukeplan          # se loggene (bytt ut med ditt containernavn)
+docker logs ukeplan          # view logs (replace with your container name)
 curl http://localhost:3001/health
 ```

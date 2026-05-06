@@ -1,98 +1,67 @@
-# Docker Deployment Instructions
+🇳🇴 [Norsk](DOCKER.no.md)
 
-This guide will help you run the task tracker application using Docker Desktop without any online services.
+# Docker deployment
+
+This guide covers running the app using Docker on your local machine.
+
+For home server deployment behind a reverse proxy, see [COSMOS.md](COSMOS.md).
 
 ## Prerequisites
 
-- Docker Desktop installed on your machine
-- No other services running on ports 3001 and 4173
+- Docker Desktop installed
+- Port 3001 free
 
-**Alternative Deployment**: If you want to run this on a home server using Cosmos Cloud, see [COSMOS.md](COSMOS.md) for detailed instructions.
+## Quick start
 
-## Quick Start
+```bash
+docker-compose up -d
+```
 
-1. **Build and start the container:**
-   ```bash
-   docker-compose up -d
-   ```
+Open `http://localhost:3001`. The app runs on a single port — Express serves both the API and the built frontend.
 
-2. **Access the application:**
-   - Open your browser and go to: `http://localhost:4173`
-   - The app is now running entirely on your local machine
+```bash
+docker-compose down      # stop
+docker-compose down -v   # stop and delete all data
+```
 
-3. **Stop the container:**
-   ```bash
-   docker-compose down
-   ```
+## Data persistence
 
-## What's Inside
+All data is stored in a Docker volume mounted at `/app/data`. It persists across container restarts and is unaffected by image updates.
 
-The Docker container runs:
-- **Backend API** (port 3001): Express server with SQLite database
-- **Frontend** (port 4173): Vite-built React application
+## Rebuilding after code changes
 
-All data is stored locally in a SQLite database inside the Docker volume, so your tasks and progress persist between restarts.
-
-## Data Persistence
-
-- The database file (`tasks.db`) is stored in a Docker volume named `task-data` mounted at `/app/data`
-- Data persists even when you stop and restart the container
-- Health checks ensure the database is working correctly
-- To completely reset and remove all data:
-  ```bash
-  docker-compose down -v
-  ```
-
-## Rebuilding After Changes
-
-If you make changes to the code:
 ```bash
 docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker-compose up -d --build
 ```
 
 ## Troubleshooting
 
-**Port conflicts:**
-If you get a port conflict error, check if another service is using ports 3001 or 4173:
+**Port 3001 in use:**
 ```bash
-# On Windows
+# Windows
 netstat -ano | findstr :3001
-netstat -ano | findstr :4173
-
-# On Mac/Linux
+# Mac/Linux
 lsof -i :3001
-lsof -i :4173
 ```
 
 **Container won't start:**
-Check the logs:
 ```bash
 docker-compose logs -f
 ```
 
 **Reset everything:**
 ```bash
-docker-compose down -v
-docker system prune -a
-docker-compose up -d --build
+docker-compose down -v && docker-compose up -d --build
 ```
 
-## Using the Application
+## First-time setup
 
-1. **First time setup:**
-   - Click "Admin" to add children and tasks
-   - Add 2 children with names, emojis, and colors
-   - Add weekly tasks with target completion counts
+1. Open `http://localhost:3001`
+2. Click the gear icon → enter the default PIN (`1234`) → go to **Children** and add your children
+3. Go to **Tasks** and add weekly tasks
+4. Change the PIN under Settings → Security (strongly recommended)
 
-2. **Daily use:**
-   - Children select their profile from the home screen
-   - They can log completed tasks by clicking the + button
-   - Progress bars show their weekly completion status
+## Weekly reset
 
-3. **Weekly reset:**
-   - Go to Admin panel
-   - Click "Nullstill uke" to reset all progress for a new week
-
-Enjoy your self-hosted task tracker!
+At the start of each week, go to the admin panel and click **Reset week** to clear all task completions.

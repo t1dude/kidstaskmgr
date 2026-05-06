@@ -3,7 +3,7 @@
     "form": [
       {
         "name": "adminPin",
-        "label": "Admin PIN-kode (brukes for å åpne innstillinger – endre fra standard 1234)",
+        "label": "Admin PIN (used to open settings – change from the default 1234)",
         "initialValue": "1234",
         "type": "text"
       }
@@ -35,7 +35,7 @@
       "routes": [
         {
           "name": "{ServiceName}",
-          "description": "Ukeplan for familien – oppgaver, kalender og middagsplan",
+          "description": "Family weekly planner – tasks, calendar, and dinner plan",
           "useHost": true,
           "target": "http://{ServiceName}:3001",
           "mode": "SERVAPP",
