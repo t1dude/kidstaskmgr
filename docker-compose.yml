@@ -9,6 +9,7 @@ services:
       - VITE_API_URL=http://localhost:3001/api
       - DB_PATH=/app/data/tasks.db
       - PORT=3001
+      - ADMIN_PIN=1234
     volumes:
       - task-data:/app/data
     restart: unless-stopped

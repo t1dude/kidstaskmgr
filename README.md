@@ -215,6 +215,23 @@ docker-compose up -d --build
 
 ## Versjonshistorikk
 
+### v1.5.0 - Sikkerhet og autentisering (2026-05-06)
+
+**Nye sikkerhetsfunksjoner:**
+- **Admin PIN-kode**: Innstillinger krever nå PIN-kode før man får tilgang. Standard PIN er `1234` – endre den i `docker-compose.yml` via `ADMIN_PIN`-variabelen
+- **Sesjonstoken**: Etter innlogging utstedes et 8-timers sesjonstoken (lagret i `sessionStorage`); barnas oppgaveregistrering krever ikke innlogging
+- **Rate limiting**: Maks 200 API-kall per 15 min (generelt), maks 10 innloggingsforsøk per 15 min
+- **Sikkerhetshoder**: `helmet.js` legger til CSP, HSTS og andre HTTP-sikkerhetshoder
+- **SSRF-beskyttelse**: iCal-URLer valideres mot private/lokale IP-adresser før lagring
+- **Innholdsgrense**: API-body begrenset til 16 KB
+
+**Konfigurasjon for produksjon:**
+Endre PIN i `docker-compose.yml`:
+```yaml
+environment:
+  - ADMIN_PIN=ditt_hemmelige_passord
+```
+
 ### v1.4.2 - Avhengighetsoppdateringer (2026-05-06)
 
 **Oppdaterte pakker (minor/patch):**

@@ -1,5 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+function authHeaders(): Record<string, string> {
+  const token = sessionStorage.getItem('adminToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export interface Child {
   id: string;
   name: string;
@@ -67,6 +72,19 @@ export interface RecipeInspiration {
 }
 
 export const api = {
+  async login(pin: string): Promise<{ token: string }> {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Feil PIN-kode');
+    }
+    return response.json();
+  },
+
   async getChildren(): Promise<Child[]> {
     const response = await fetch(`${API_URL}/children`);
     return response.json();
@@ -75,14 +93,14 @@ export const api = {
   async createChild(data: Omit<Child, 'id' | 'created_at'>): Promise<Child> {
     const response = await fetch(`${API_URL}/children`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     return response.json();
   },
 
   async deleteChild(id: string): Promise<void> {
-    await fetch(`${API_URL}/children/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/children/${id}`, { method: 'DELETE', headers: authHeaders() });
   },
 
   async getTasks(): Promise<Task[]> {
@@ -93,7 +111,7 @@ export const api = {
   async createTask(data: Omit<Task, 'id' | 'created_at' | 'is_active'>): Promise<Task> {
     const response = await fetch(`${API_URL}/tasks`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     return response.json();
@@ -102,14 +120,14 @@ export const api = {
   async updateTask(id: string, data: Partial<Omit<Task, 'id' | 'created_at'>>): Promise<Task> {
     const response = await fetch(`${API_URL}/tasks/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     return response.json();
   },
 
   async deleteTask(id: string): Promise<void> {
-    await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE', headers: authHeaders() });
   },
 
   async getTaskCompletions(childId: string, weekStart: string): Promise<TaskCompletion[]> {
@@ -131,7 +149,7 @@ export const api = {
   },
 
   async resetWeek(): Promise<void> {
-    await fetch(`${API_URL}/reset-week`, { method: 'DELETE' });
+    await fetch(`${API_URL}/reset-week`, { method: 'DELETE', headers: authHeaders() });
   },
 
   async getCalendarSettings(): Promise<CalendarSettings | null> {
@@ -142,7 +160,7 @@ export const api = {
   async updateCalendarSettings(data: { ical_url: string }): Promise<CalendarSettings> {
     const response = await fetch(`${API_URL}/calendar-settings`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -167,14 +185,14 @@ export const api = {
   async createMeal(name: string, recipeUrl?: string): Promise<Meal> {
     const response = await fetch(`${API_URL}/meals`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ name, recipe_url: recipeUrl ?? null }),
     });
     return response.json();
   },
 
   async deleteMeal(id: string): Promise<void> {
-    await fetch(`${API_URL}/meals/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/meals/${id}`, { method: 'DELETE', headers: authHeaders() });
   },
 
   async getMealPlan(weekStart: string): Promise<MealPlanEntry[]> {

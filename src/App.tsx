@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { HomeScreen } from './components/HomeScreen';
 import { ChildView } from './components/ChildView';
 import { AdminView } from './components/AdminView';
+import { PinModal } from './components/PinModal';
 import type { Child } from './lib/api';
 
 type View = 'home' | 'child' | 'admin';
@@ -11,6 +12,8 @@ function App() {
   const [currentView, setCurrentView] = useState<View>('home');
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [adminInitialTab, setAdminInitialTab] = useState<AdminTab>('settings');
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState<AdminTab>('settings');
 
   function handleSelectChild(child: Child) {
     setSelectedChild(child);
@@ -23,7 +26,20 @@ function App() {
   }
 
   function handleAdminClick(tab: AdminTab = 'settings') {
-    setAdminInitialTab(tab);
+    const token = sessionStorage.getItem('adminToken');
+    if (token) {
+      setAdminInitialTab(tab);
+      setCurrentView('admin');
+    } else {
+      setPendingTab(tab);
+      setShowPinModal(true);
+    }
+  }
+
+  function handlePinSuccess(token: string) {
+    sessionStorage.setItem('adminToken', token);
+    setShowPinModal(false);
+    setAdminInitialTab(pendingTab);
     setCurrentView('admin');
   }
 
@@ -42,6 +58,13 @@ function App() {
 
       {currentView === 'admin' && (
         <AdminView onBack={handleBackToHome} initialTab={adminInitialTab} />
+      )}
+
+      {showPinModal && (
+        <PinModal
+          onSuccess={handlePinSuccess}
+          onCancel={() => setShowPinModal(false)}
+        />
       )}
     </>
   );
