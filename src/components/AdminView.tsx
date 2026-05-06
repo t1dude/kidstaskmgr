@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Settings, Edit, Check, X, Search, ExternalLink, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Settings, Edit, Check, X, Search, ExternalLink, Loader2, Globe } from 'lucide-react';
 import type { Task, Child, Meal, RecipeInspiration } from '../lib/api';
 import { useLanguage } from '../lib/LanguageContext';
 
@@ -298,11 +298,12 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
               <button
                 onClick={() => setLang(lang === 'no' ? 'en' : 'no')}
                 title={t.switchToLanguage}
-                className={`px-2 py-1 rounded-lg text-sm font-semibold transition-colors ${
-                  dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                className={`rounded-full px-3 py-3 transition-all duration-300 hover:scale-110 active:scale-95 flex items-center gap-1 ${
+                  dm ? 'bg-gray-700' : 'bg-gray-100'
                 }`}
               >
-                {lang === 'no' ? '🇬🇧' : '🇳🇴'}
+                <Globe className={`w-4 h-4 ${dm ? 'text-gray-200' : 'text-gray-700'}`} />
+                <span className={`text-xs font-bold leading-none ${dm ? 'text-gray-200' : 'text-gray-700'}`}>{lang.toUpperCase()}</span>
               </button>
               <button
                 onClick={onBack}

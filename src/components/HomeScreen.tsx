@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus } from 'lucide-react';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus, Globe } from 'lucide-react';
 import type { Child, CalendarEvent, Task, TaskCompletion, Meal, Message } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 import { useLanguage } from '../lib/LanguageContext';
@@ -276,12 +276,13 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
         </button>
         <button
           onClick={() => setLang(lang === 'no' ? 'en' : 'no')}
-          className={`rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+          className={`rounded-full px-3 py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center gap-1 ${
             darkMode ? 'bg-gray-700' : 'bg-white'
           }`}
           title={t.switchToLanguage}
         >
-          <span className="text-xl leading-none">{lang === 'no' ? '🇬🇧' : '🇳🇴'}</span>
+          <Globe className={`w-4 h-4 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} />
+          <span className={`text-xs font-bold leading-none ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{lang.toUpperCase()}</span>
         </button>
         <button
           onClick={() => onAdminClick()}
