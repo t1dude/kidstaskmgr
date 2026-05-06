@@ -121,29 +121,29 @@ export function ChildView({ child, onBack }: ChildViewProps) {
       )}
 
       <div className="max-w-4xl mx-auto">
-        <div className={`rounded-3xl shadow-2xl p-6 mb-6 ${dm ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`rounded-3xl shadow-2xl p-4 md:p-6 mb-6 ${dm ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-4xl shadow-lg"
+                className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-3xl md:text-4xl shadow-lg flex-shrink-0"
                 style={{ backgroundColor: child.color + '30', borderColor: child.color, borderWidth: 3 }}
               >
                 {child.avatar_emoji}
               </div>
-              <div>
-                <h1 className={`text-2xl md:text-3xl font-bold ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h1>
-                <p className={dm ? 'text-gray-400' : 'text-gray-600'}>Dine oppgaver for uken</p>
+              <div className="min-w-0">
+                <h1 className={`text-xl md:text-3xl font-bold truncate ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h1>
+                <p className={`text-sm ${dm ? 'text-gray-400' : 'text-gray-600'}`}>Dine oppgaver for uken</p>
               </div>
             </div>
             <button
               onClick={onBack}
-              className={`px-4 py-2 rounded-lg transition-colors ${dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`flex-shrink-0 ml-2 px-3 md:px-4 py-2 rounded-lg transition-colors ${dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
               Tilbake
             </button>
           </div>
 
-          <div className="mb-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 text-white">
+          <div className="mb-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 md:p-6 text-white">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Trophy className="w-6 h-6" />

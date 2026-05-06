@@ -240,7 +240,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     return (
       <button
         onClick={onToggle}
-        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+        className={`flex-shrink-0 relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
           value ? 'bg-blue-500' : dm ? 'bg-gray-600' : 'bg-gray-300'
         }`}
         role="switch"
@@ -264,15 +264,15 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   return (
     <div className={`min-h-screen p-4 ${dm ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-100 to-blue-50'}`}>
       <div className="max-w-4xl mx-auto">
-        <div className={`rounded-2xl shadow-xl p-6 mb-6 ${card}`}>
+        <div className={`rounded-2xl shadow-xl p-4 md:p-6 mb-6 ${card}`}>
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Settings className="w-8 h-8 text-blue-500" />
-              <h1 className={`text-3xl font-bold ${bodyText}`}>Administrasjon</h1>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Settings className="w-6 h-6 md:w-8 md:h-8 text-blue-500 flex-shrink-0" />
+              <h1 className={`text-xl md:text-3xl font-bold truncate ${bodyText}`}>Administrasjon</h1>
             </div>
             <button
               onClick={onBack}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`flex-shrink-0 ml-2 px-3 md:px-4 py-2 rounded-lg transition-colors ${
                 dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -304,7 +304,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
               <div className={`p-4 rounded-lg ${dm ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <h3 className={`font-semibold mb-3 ${labelText}`}>Utseende</h3>
                 <div className="flex items-center justify-between py-2">
-                  <div>
+                  <div className="min-w-0 flex-1 mr-4">
                     <p className={`font-medium ${bodyText}`}>Mørk modus</p>
                     <p className={`text-sm ${mutedText}`}>Mørkt fargetema for hele appen</p>
                   </div>
@@ -318,7 +318,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                 <div className={`divide-y ${dividerColor}`}>
                   {featureList.map(({ key, label, desc }) => (
                     <div key={key} className="flex items-center justify-between py-3">
-                      <div>
+                      <div className="min-w-0 flex-1 mr-4">
                         <p className={`font-medium ${bodyText}`}>{label}</p>
                         <p className={`text-sm ${mutedText}`}>{desc}</p>
                       </div>
@@ -332,7 +332,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                 <h3 className={`font-semibold mb-1 ${labelText}`}>Sikkerhet</h3>
                 <p className={`text-sm mb-3 ${mutedText}`}>Innstillinger for tilgangskontroll.</p>
                 <div className="flex items-center justify-between py-2">
-                  <div>
+                  <div className="min-w-0 flex-1 mr-4">
                     <p className={`font-medium ${bodyText}`}>Krev PIN for startsiden</p>
                     <p className={`text-sm ${mutedText}`}>Beskytter hele appen med PIN – anbefalt når appen er tilgjengelig over internett</p>
                   </div>
@@ -493,7 +493,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
             <div>
               <div className={`mb-6 p-4 rounded-lg ${sectionBg('orange')}`}>
                 <h3 className={`font-semibold mb-3 ${labelText}`}>Legg til middag</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     placeholder="F.eks. Taco, Pasta bolognese..."
@@ -504,7 +504,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                       dm ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300'
                     }`}
                   />
-                  <button onClick={addMeal} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
+                  <button onClick={addMeal} className="sm:flex-none px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2">
                     <Plus className="w-5 h-5" />Legg til
                   </button>
                 </div>
@@ -533,7 +533,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                 <p className={`text-sm mb-3 ${mutedText}`}>
                   Søk etter ingredienser eller retttype – henter oppskrifter fra matprat.no
                 </p>
-                <div className="flex gap-2 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
                   <input
                     type="text"
                     placeholder="F.eks. kylling, fisk, suppe, grillmat..."
@@ -547,7 +547,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                   <button
                     onClick={searchInspiration}
                     disabled={inspirationLoading || !inspirationQuery.trim()}
-                    className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="sm:flex-none px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {inspirationLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     Søk
