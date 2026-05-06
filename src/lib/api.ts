@@ -72,6 +72,19 @@ export interface RecipeInspiration {
 }
 
 export const api = {
+  async getSettings(): Promise<{ requirePinForHome: boolean }> {
+    const response = await fetch(`${API_URL}/settings`);
+    return response.json();
+  },
+
+  async updateSettings(data: { requirePinForHome: boolean }): Promise<void> {
+    await fetch(`${API_URL}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(data),
+    });
+  },
+
   async login(pin: string): Promise<{ token: string }> {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',

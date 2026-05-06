@@ -1,18 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HomeScreen } from './components/HomeScreen';
 import { ChildView } from './components/ChildView';
 import { AdminView } from './components/AdminView';
 import { PinModal } from './components/PinModal';
+import { api } from './lib/api';
 import type { Child } from './lib/api';
 
 type View = 'home' | 'child' | 'admin';
 type AdminTab = 'settings' | 'tasks' | 'children' | 'calendar' | 'meals';
-
-function needsHomePin(): boolean {
-  const requirePin = localStorage.getItem('requirePinForHome');
-  if (!requirePin || !JSON.parse(requirePin)) return false;
-  return !sessionStorage.getItem('adminToken');
-}
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('home');
@@ -20,7 +15,18 @@ function App() {
   const [adminInitialTab, setAdminInitialTab] = useState<AdminTab>('settings');
   const [showPinModal, setShowPinModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<AdminTab>('settings');
-  const [homeUnlocked, setHomeUnlocked] = useState(() => !needsHomePin());
+  const [homeUnlocked, setHomeUnlocked] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  useEffect(() => {
+    api.getSettings()
+      .then(({ requirePinForHome }) => {
+        const hasToken = !!sessionStorage.getItem('adminToken');
+        setHomeUnlocked(!requirePinForHome || hasToken);
+      })
+      .catch(() => setHomeUnlocked(true))
+      .finally(() => setSettingsLoaded(true));
+  }, []);
 
   function handleSelectChild(child: Child) {
     setSelectedChild(child);
@@ -53,6 +59,8 @@ function App() {
       setCurrentView('admin');
     }
   }
+
+  if (!settingsLoaded) return null;
 
   if (!homeUnlocked) {
     return (

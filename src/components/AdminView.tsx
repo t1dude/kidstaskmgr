@@ -30,10 +30,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     return saved ? JSON.parse(saved) : false;
   });
   const [features, setFeatures] = useState<AppFeatures>(getDefaultFeatures);
-  const [requirePinForHome, setRequirePinForHome] = useState(() => {
-    const saved = localStorage.getItem('requirePinForHome');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [requirePinForHome, setRequirePinForHome] = useState(false);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
@@ -56,6 +53,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     loadChildren();
     loadCalendarSettings();
     loadMeals();
+    api.getSettings().then(({ requirePinForHome }) => setRequirePinForHome(requirePinForHome)).catch(() => {});
   }, []);
 
   function toggleDarkMode() {
@@ -70,10 +68,14 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     localStorage.setItem('appFeatures', JSON.stringify(next));
   }
 
-  function toggleRequirePinForHome() {
+  async function toggleRequirePinForHome() {
     const next = !requirePinForHome;
     setRequirePinForHome(next);
-    localStorage.setItem('requirePinForHome', JSON.stringify(next));
+    try {
+      await api.updateSettings({ requirePinForHome: next });
+    } catch {
+      setRequirePinForHome(!next);
+    }
   }
 
   async function loadTasks() {

@@ -125,6 +125,11 @@ function initDatabase() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_task_completions_child_id ON task_completions(child_id);
     CREATE INDEX IF NOT EXISTS idx_task_completions_task_id ON task_completions(task_id);
     CREATE INDEX IF NOT EXISTS idx_task_completions_week_start ON task_completions(week_start_date);
@@ -176,6 +181,23 @@ const authLimiter = rateLimit({
 
 app.use('/api/', generalLimiter);
 app.use('/api/auth/', authLimiter);
+
+// ── App settings (public read, auth write) ────────────────────────────────────
+app.get('/api/settings', (req, res) => {
+  try {
+    const row = db.prepare("SELECT value FROM app_settings WHERE key = 'requirePinForHome'").get() as any;
+    res.json({ requirePinForHome: row ? JSON.parse(row.value) : false });
+  } catch { res.status(500).json({ error: 'Failed to fetch settings' }); }
+});
+
+app.put('/api/settings', requireAuth, (req, res) => {
+  try {
+    const { requirePinForHome } = req.body;
+    if (typeof requirePinForHome !== 'boolean') return res.status(400).json({ error: 'Invalid value' });
+    db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('requirePinForHome', ?)").run(JSON.stringify(requirePinForHome));
+    res.json({ success: true });
+  } catch { res.status(500).json({ error: 'Failed to save settings' }); }
+});
 
 // ── Auth endpoints ────────────────────────────────────────────────────────────
 app.post('/api/auth/login', (req, res) => {
