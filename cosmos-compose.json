@@ -23,7 +23,7 @@
       ],
       "labels": {
         "cosmos-force-network-secured": "true",
-        "cosmos-auto-update": "false"
+        "cosmos-auto-update": "true"
       },
       "volumes": [
         {
