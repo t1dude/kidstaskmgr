@@ -389,7 +389,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </div>
         )}
 
-        {(features.calendar || features.meals) && <div className={`grid grid-cols-1 gap-6 mb-8 ${features.calendar && features.meals ? 'md:grid-cols-2' : ''}`}>
+        {(features.calendar || features.meals || features.messages) && <div className={`grid grid-cols-1 gap-6 mb-8 ${features.calendar && (features.meals || features.messages) ? 'md:grid-cols-2 md:items-start' : ''}`}>
           {features.calendar && <div className={`rounded-2xl p-4 md:p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -452,6 +452,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             )}
           </div>}
 
+          {(features.meals || features.messages) && <div className="flex flex-col gap-6">
           {features.meals && <div className={`rounded-2xl p-4 md:p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -538,71 +539,72 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               </div>
             )}
           </div>}
-        </div>}
 
-        {features.messages && (
-          <div className={`rounded-2xl p-4 md:p-6 shadow-xl mb-8 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            <div className="flex items-center gap-2 mb-4">
-              <Bell className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
-              <h2 className={`text-lg md:text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                Viktige beskjeder
-              </h2>
-            </div>
+          {features.messages && (
+            <div className={`rounded-2xl p-4 md:p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <Bell className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
+                <h2 className={`text-lg md:text-2xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  Viktige beskjeder
+                </h2>
+              </div>
 
-            <div className="space-y-2 mb-4">
-              {messages.length === 0 && (
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Ingen aktive beskjeder
-                </p>
-              )}
-              {messages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`flex items-start gap-3 p-3 rounded-xl ${
-                    darkMode ? 'bg-gray-700' : 'bg-yellow-50 border border-yellow-200'
-                  }`}
-                >
-                  <p className={`flex-1 text-sm leading-relaxed ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                    {msg.text}
+              <div className="space-y-2 mb-4">
+                {messages.length === 0 && (
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Ingen aktive beskjeder
                   </p>
-                  <button
-                    onClick={() => dismissMessage(msg.id)}
-                    title="Fjern beskjed"
-                    className={`flex-shrink-0 rounded-full p-1 transition-colors ${
-                      darkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200' : 'hover:bg-yellow-200 text-gray-400 hover:text-gray-600'
+                )}
+                {messages.map(msg => (
+                  <div
+                    key={msg.id}
+                    className={`flex items-start gap-3 p-3 rounded-xl ${
+                      darkMode ? 'bg-gray-700' : 'bg-yellow-50 border border-yellow-200'
                     }`}
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <p className={`flex-1 text-sm leading-relaxed ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      {msg.text}
+                    </p>
+                    <button
+                      onClick={() => dismissMessage(msg.id)}
+                      title="Fjern beskjed"
+                      className={`flex-shrink-0 rounded-full p-1 transition-colors ${
+                        darkMode ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200' : 'hover:bg-yellow-200 text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Skriv en beskjed til familien..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addMessage()}
-                maxLength={500}
-                className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
-                    : 'bg-gray-50 border-gray-300 text-gray-800'
-                }`}
-              />
-              <button
-                onClick={addMessage}
-                disabled={!newMessage.trim()}
-                className="flex-shrink-0 p-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title="Legg til beskjed"
-              >
-                <Plus className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Skriv en beskjed til familien..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addMessage()}
+                  maxLength={500}
+                  className={`flex-1 min-w-0 px-3 py-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                    darkMode
+                      ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
+                      : 'bg-gray-50 border-gray-300 text-gray-800'
+                  }`}
+                />
+                <button
+                  onClick={addMessage}
+                  disabled={!newMessage.trim()}
+                  className="flex-shrink-0 p-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Legg til beskjed"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          </div>}
+        </div>}
       </div>
 
       {selectedChildTips && (
