@@ -1,0 +1,52 @@
+{
+  "cosmos-installer": {
+    "form": [
+      {
+        "name": "adminPin",
+        "label": "Admin PIN-kode (brukes for å åpne innstillinger – endre fra standard 1234)",
+        "initialValue": "1234",
+        "type": "text"
+      }
+    ]
+  },
+  "minVersion": "0.7.6",
+  "services": {
+    "{ServiceName}": {
+      "image": "kidstaskmgr:latest",
+      "container_name": "{ServiceName}",
+      "restart": "unless-stopped",
+      "environment": [
+        "NODE_ENV=production",
+        "DB_PATH=/app/data/tasks.db",
+        "PORT=3001",
+        "ADMIN_PIN={Context.adminPin}"
+      ],
+      "labels": {
+        "cosmos-force-network-secured": "true",
+        "cosmos-auto-update": "false"
+      },
+      "volumes": [
+        {
+          "source": "{ServiceName}-data",
+          "target": "/app/data",
+          "type": "volume"
+        }
+      ],
+      "routes": [
+        {
+          "name": "{ServiceName}",
+          "description": "Ukeplan for familien – oppgaver, kalender og middagsplan",
+          "useHost": true,
+          "target": "http://{ServiceName}:3001",
+          "mode": "SERVAPP",
+          "Timeout": 14400000,
+          "ThrottlePerMinute": 6000,
+          "BlockCommonBots": true,
+          "SmartShield": {
+            "Enabled": true
+          }
+        }
+      ]
+    }
+  }
+}
