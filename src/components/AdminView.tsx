@@ -347,7 +347,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
             <div>
               <div className={`mb-6 p-4 rounded-lg ${sectionBg('blue')}`}>
                 <h3 className={`font-semibold mb-3 ${labelText}`}>Legg til ny oppgave</h3>
-                <div className="flex gap-2 mb-2">
+                <div className="flex flex-col sm:flex-row gap-2 mb-2">
                   <input
                     type="text"
                     placeholder="Oppgavenavn"
@@ -355,17 +355,19 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                     onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                     className={`flex-1 ${inputClass}`}
                   />
-                  <input
-                    type="number"
-                    min="1"
-                    value={newTask.target_count}
-                    onChange={(e) => setNewTask({ ...newTask, target_count: parseInt(e.target.value) || 1 })}
-                    className={`w-20 ${inputClass}`}
-                    title="Antall ganger per uke"
-                  />
-                  <button onClick={addTask} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                    <Plus className="w-5 h-5" />Legg til
-                  </button>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={newTask.target_count}
+                      onChange={(e) => setNewTask({ ...newTask, target_count: parseInt(e.target.value) || 1 })}
+                      className={`w-20 ${inputClass}`}
+                      title="Antall ganger per uke"
+                    />
+                    <button onClick={addTask} className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                      <Plus className="w-5 h-5" />Legg til
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -421,16 +423,18 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
             <div>
               <div className={`mb-6 p-4 rounded-lg ${sectionBg('green')}`}>
                 <h3 className={`font-semibold mb-3 ${labelText}`}>Legg til barn</h3>
-                <div className="flex gap-2 mb-2">
+                <div className="flex flex-col sm:flex-row gap-2 mb-2">
                   <input type="text" placeholder="Navn" value={newChild.name} onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
                     className={`flex-1 ${inputClass}`} />
-                  <input type="text" placeholder="Emoji" value={newChild.avatar_emoji} onChange={(e) => setNewChild({ ...newChild, avatar_emoji: e.target.value })}
-                    className={`w-20 px-4 py-2 border rounded-lg text-center text-2xl focus:outline-none ${dm ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'}`} />
-                  <input type="color" value={newChild.color} onChange={(e) => setNewChild({ ...newChild, color: e.target.value })}
-                    className={`w-16 h-11 border rounded-lg cursor-pointer ${dm ? 'bg-gray-700 border-gray-600' : 'border-gray-300'}`} />
-                  <button onClick={addChild} className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-                    <Plus className="w-5 h-5" />Legg til
-                  </button>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="Emoji" value={newChild.avatar_emoji} onChange={(e) => setNewChild({ ...newChild, avatar_emoji: e.target.value })}
+                      className={`w-16 px-2 py-2 border rounded-lg text-center text-2xl focus:outline-none ${dm ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300'}`} />
+                    <input type="color" value={newChild.color} onChange={(e) => setNewChild({ ...newChild, color: e.target.value })}
+                      className={`w-12 h-11 border rounded-lg cursor-pointer ${dm ? 'bg-gray-700 border-gray-600' : 'border-gray-300'}`} />
+                    <button onClick={addChild} className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                      <Plus className="w-5 h-5" />Legg til
+                    </button>
+                  </div>
                 </div>
               </div>
 

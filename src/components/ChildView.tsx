@@ -131,7 +131,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
                 {child.avatar_emoji}
               </div>
               <div>
-                <h1 className={`text-3xl font-bold ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h1>
+                <h1 className={`text-2xl md:text-3xl font-bold ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{child.name}</h1>
                 <p className={dm ? 'text-gray-400' : 'text-gray-600'}>Dine oppgaver for uken</p>
               </div>
             </div>

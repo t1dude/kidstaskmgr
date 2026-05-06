@@ -273,8 +273,8 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
       </div>
 
       <div className="max-w-4xl mx-auto pt-12">
-        <div className="text-center mb-12">
-          <h1 className={`text-6xl font-bold mb-8 drop-shadow-lg ${
+        <div className="text-center mb-6 md:mb-12">
+          <h1 className={`text-4xl md:text-6xl font-bold mb-4 md:mb-8 drop-shadow-lg ${
             darkMode ? 'text-gray-100' : 'text-gray-800'
           }`}>
             Ukeplan for familien
@@ -286,7 +286,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
             <div key={child.id} className="relative">
               <button
                 onClick={() => onSelectChild(child)}
-                className={`group relative rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95 w-full ${
+                className={`group relative rounded-3xl p-5 md:p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95 w-full ${
                   darkMode ? 'bg-gray-800' : 'bg-white'
                 }`}
                 style={{
@@ -296,7 +296,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
               >
                 <div className="flex flex-col items-center gap-4">
                   <div
-                    className="w-32 h-32 rounded-full flex items-center justify-center text-7xl shadow-xl transition-transform group-hover:scale-110 relative"
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-5xl md:text-7xl shadow-xl transition-transform group-hover:scale-110 relative"
                     style={{
                       backgroundColor: child.color + '20',
                       borderWidth: 4,
@@ -309,7 +309,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                       {child.progress}%
                     </div>
                   </div>
-                  <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  <h2 className={`text-2xl md:text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                     {child.name}
                   </h2>
                   <div className="w-full px-4">
