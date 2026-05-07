@@ -454,7 +454,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
 
           {(features.meals || features.messages) && <div className="flex flex-col gap-6">
           {features.meals && <div className={`rounded-2xl p-4 md:p-6 shadow-xl ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <Utensils className={`w-6 h-6 flex-shrink-0 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
                 <h2 className={`text-lg md:text-2xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
@@ -476,7 +476,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 {t.noMealsHome}
               </p>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-2">
                 {getWeekDays().map((day) => {
                   const selectedMealId = mealPlan[day.date] || '';
                   const selectedMeal = meals.find((m) => m.id === selectedMealId);
@@ -484,10 +484,10 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                   return (
                     <div
                       key={day.date}
-                      className={`flex items-center gap-3 p-2 rounded-lg ${
+                      className={`flex items-center gap-3 p-3 rounded-xl ${
                         isToday
-                          ? darkMode ? 'bg-orange-900/30 ring-1 ring-orange-500' : 'bg-orange-50 ring-1 ring-orange-300'
-                          : ''
+                          ? darkMode ? 'bg-orange-900/40 border border-orange-500/50' : 'bg-orange-50 border border-orange-300'
+                          : darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-50 border border-gray-200'
                       }`}
                     >
                       <span className={`text-sm font-bold w-8 shrink-0 ${
@@ -502,7 +502,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                         onChange={(e) => setMealForDay(day.date, e.target.value)}
                         className={`flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                           darkMode
-                            ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-orange-400'
+                            ? 'bg-gray-600 border-gray-500 text-gray-100 focus:border-orange-400'
                             : 'bg-white border-gray-300 text-gray-800 focus:border-orange-400'
                         } focus:outline-none focus:ring-1 focus:ring-orange-400`}
                       >
