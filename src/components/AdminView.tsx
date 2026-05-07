@@ -73,6 +73,16 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     }).catch(() => {});
   }, []);
 
+  function handleSaveError(err: unknown) {
+    if (err instanceof Error && err.message === '401') {
+      localStorage.removeItem('adminToken');
+      alert(t.sessionExpired);
+      onBack();
+    } else {
+      alert(t.saveFailed);
+    }
+  }
+
   function toggleDarkMode() {
     const next = !darkMode;
     setDarkMode(next);
@@ -113,11 +123,11 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
       await api.createTask({ title: newTask.title, target_count: newTask.target_count, icon: newTask.icon, description: '' });
       setNewTask({ title: '', target_count: 1, icon: 'check-circle' });
       loadTasks();
-    } catch { /* ignore */ }
+    } catch (err) { handleSaveError(err); }
   }
 
   async function deleteTask(id: string) {
-    try { await api.deleteTask(id); loadTasks(); } catch { /* ignore */ }
+    try { await api.deleteTask(id); loadTasks(); } catch (err) { handleSaveError(err); }
   }
 
   async function addChild() {
@@ -126,11 +136,11 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
       await api.createChild({ name: newChild.name, color: newChild.color, avatar_emoji: newChild.avatar_emoji });
       setNewChild({ name: '', color: '#3b82f6', avatar_emoji: '😊' });
       loadChildren();
-    } catch { /* ignore */ }
+    } catch (err) { handleSaveError(err); }
   }
 
   async function deleteChild(id: string) {
-    try { await api.deleteChild(id); loadChildren(); } catch { /* ignore */ }
+    try { await api.deleteChild(id); loadChildren(); } catch (err) { handleSaveError(err); }
   }
 
   function startEditingTask(task: Task) {
@@ -148,7 +158,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
       await api.updateTask(taskId, { target_count: editingTaskCount });
       setEditingTaskId(null);
       loadTasks();
-    } catch { /* ignore */ }
+    } catch (err) { handleSaveError(err); }
   }
 
   async function resetWeek() {
@@ -162,7 +172,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
 
   async function addMeal() {
     if (!newMealName.trim()) return;
-    try { await api.createMeal(newMealName); setNewMealName(''); loadMeals(); } catch { /* ignore */ }
+    try { await api.createMeal(newMealName); setNewMealName(''); loadMeals(); } catch (err) { handleSaveError(err); }
   }
 
   function getMealIcon(name: string): string {
@@ -193,7 +203,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   }
 
   async function deleteMeal(id: string) {
-    try { await api.deleteMeal(id); loadMeals(); } catch { /* ignore */ }
+    try { await api.deleteMeal(id); loadMeals(); } catch (err) { handleSaveError(err); }
   }
 
   async function searchInspiration() {
@@ -217,7 +227,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
       await api.createMeal(title, recipeUrl);
       setAddedRecipes(prev => new Set(prev).add(title));
       loadMeals();
-    } catch { /* ignore */ }
+    } catch (err) { handleSaveError(err); }
   }
 
   const externalSites = [

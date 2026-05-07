@@ -99,6 +99,8 @@ export interface Translations {
   resetWeekSuccess: string;
   calendarSaved: string;
   calendarSaveError: string;
+  sessionExpired: string;
+  saveFailed: string;
   tasksForWeek: string;
   weeklyProgress: string;
   times: string;
@@ -206,6 +208,8 @@ export const translations: Record<Lang, Translations> = {
     resetWeekSuccess: 'Uken er nullstilt!',
     calendarSaved: 'Kalenderinnstillinger lagret!',
     calendarSaveError: 'Kunne ikke lagre kalenderinnstillinger',
+    sessionExpired: 'Sesjonen er utløpt. Logg inn på nytt.',
+    saveFailed: 'Kunne ikke lagre. Prøv igjen.',
     tasksForWeek: 'Dine oppgaver for uken',
     weeklyProgress: 'Ukens fremdrift',
     times: 'ganger',
@@ -332,6 +336,8 @@ export const translations: Record<Lang, Translations> = {
     resetWeekSuccess: 'The week has been reset!',
     calendarSaved: 'Calendar settings saved!',
     calendarSaveError: 'Could not save calendar settings',
+    sessionExpired: 'Session expired. Please log in again.',
+    saveFailed: 'Could not save. Please try again.',
     tasksForWeek: 'Your tasks for the week',
     weeklyProgress: 'Weekly progress',
     times: 'times',

@@ -118,11 +118,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
+    if (!response.ok) throw new Error(`${response.status}`);
     return response.json();
   },
 
   async deleteChild(id: string): Promise<void> {
-    await fetch(`${API_URL}/children/${id}`, { method: 'DELETE', headers: authHeaders() });
+    const response = await fetch(`${API_URL}/children/${id}`, { method: 'DELETE', headers: authHeaders() });
+    if (!response.ok) throw new Error(`${response.status}`);
   },
 
   async getTasks(): Promise<Task[]> {
@@ -136,6 +138,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
+    if (!response.ok) throw new Error(`${response.status}`);
     return response.json();
   },
 
@@ -145,11 +148,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
+    if (!response.ok) throw new Error(`${response.status}`);
     return response.json();
   },
 
   async deleteTask(id: string): Promise<void> {
-    await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE', headers: authHeaders() });
+    const response = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE', headers: authHeaders() });
+    if (!response.ok) throw new Error(`${response.status}`);
   },
 
   async getTaskCompletions(childId: string, weekStart: string): Promise<TaskCompletion[]> {
@@ -210,11 +215,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ name, recipe_url: recipeUrl ?? null }),
     });
+    if (!response.ok) throw new Error(`${response.status}`);
     return response.json();
   },
 
   async deleteMeal(id: string): Promise<void> {
-    await fetch(`${API_URL}/meals/${id}`, { method: 'DELETE', headers: authHeaders() });
+    const response = await fetch(`${API_URL}/meals/${id}`, { method: 'DELETE', headers: authHeaders() });
+    if (!response.ok) throw new Error(`${response.status}`);
   },
 
   async getMealPlan(weekStart: string): Promise<MealPlanEntry[]> {
