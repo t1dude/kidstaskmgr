@@ -2,6 +2,9 @@
 
 # Endringslogg
 
+## v1.7.1 – Porsjonsinformasjon i oppskrift (2026-05-07)
+- Ingrediensmodalen viser nå antall porsjoner oppskriften er beregnet for (f.eks. «· 4 porsjoner»), slik at du vet hva mengdene gjelder
+
 ## v1.7.0 – Microsoft To-Do handlelisteintegrasjon (2026-05-07)
 - Legg ingredienser fra Matprat-oppskrifter direkte i en delt Microsoft To-Do-liste
 - OAuth 2.0 autorisasjonskode-flyt — koble til én gang per husstand, ingen innlogging per enhet
