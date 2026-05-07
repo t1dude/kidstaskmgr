@@ -2,6 +2,12 @@
 
 # Endringslogg
 
+## v1.6.1 – Mobilfikser og sesjonsvalidering (2026-05-07)
+- Fiks: oppgaver, barn og måltider ble stille ikke lagret på mobil når sesjonen var utløpt – API-kall kaster nå feil ved ikke-OK svar og viser en feilmelding
+- Fiks: utløpte sesjoner oppdages nå ved oppstart – gamle tokens ryddes bort før brukeren går inn i admin-panelet, slik at PIN-dialogen vises med en gang fremfor etter mislykkede lagringsforøk
+- Nytt `GET /api/auth/validate`-endepunkt brukes til å verifisere lagret token ved oppstart
+- Lagt til `sessionExpired`- og `saveFailed`-feilmeldinger på begge språk
+
 ## v1.6.0 – Norsk/engelsk språkstøtte (2026-05-06)
 - Språkveksler-knapp (🇬🇧/🇳🇴) i toppmenyen på forsiden og i admin-panelet
 - Alle UI-strenger, dag-/månedsnavn og motivasjonsmeldinger for tips er fullt oversatt

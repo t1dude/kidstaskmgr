@@ -2,6 +2,12 @@
 
 # Changelog
 
+## v1.6.1 – Mobile save fixes and session validation (2026-05-07)
+- Fix: tasks, children, and meals silently failed to save on mobile when the session had expired — API calls now throw on non-OK responses and show an error message
+- Fix: expired sessions now detected on app startup — stale tokens are cleared before the user enters the admin panel, so the PIN prompt appears upfront instead of after failed save attempts
+- New `GET /api/auth/validate` endpoint used to verify the stored token at startup
+- Added `sessionExpired` and `saveFailed` error messages in both languages
+
 ## v1.6.0 – Norwegian/English language support (2026-05-06)
 - Language toggle button (🇬🇧/🇳🇴) in the home screen header and admin panel
 - All UI strings, day/month names, and motivational tip messages fully translated
