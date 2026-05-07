@@ -674,10 +674,12 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 <h2 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{t.todoIngredients}</h2>
                 <p className={`text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {t.todoIngredientsDesc(todoStatus?.listName ?? '')}
-                  {ingredientModal.recipeYield && (
-                    <span className="ml-2 text-xs opacity-70">· {ingredientModal.recipeYield} {t.servings}</span>
-                  )}
                 </p>
+                {ingredientModal.recipeYield && (
+                  <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {ingredientModal.recipeYield} {t.servings}
+                  </p>
+                )}
               </div>
               <button onClick={() => setIngredientModal(null)} className={`flex-shrink-0 ml-2 p-1 rounded-full ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
                 <X className="w-5 h-5" />
