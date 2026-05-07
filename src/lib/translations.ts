@@ -65,7 +65,6 @@ export interface Translations {
   featureMessagesDesc: string;
   addTaskSection: string;
   taskNamePlaceholder: string;
-  timesPerWeekTitle: string;
   add: string;
   timesPerWeek: string;
   editCount: string;
@@ -109,7 +108,6 @@ export interface Translations {
   todoConnect: string;
   todoConnecting: string;
   todoSelectList: string;
-  todoNoListSelected: string;
   todoAddToList: string;
   todoIngredients: string;
   todoIngredientsDesc: (listName: string) => string;
@@ -119,10 +117,8 @@ export interface Translations {
   todoFetchFailed: string;
   todoSelectAll: string;
   todoDeselectAll: string;
-  todoNotConnected: string;
   todoLoadingLists: string;
   todoListSaved: string;
-  servings: string;
   tasksForWeek: string;
   weeklyProgress: string;
   times: string;
@@ -196,7 +192,6 @@ export const translations: Record<Lang, Translations> = {
     featureMessagesDesc: 'Legg igjen beskjeder til familien på forsiden',
     addTaskSection: 'Legg til ny oppgave',
     taskNamePlaceholder: 'Oppgavenavn',
-    timesPerWeekTitle: 'Antall ganger per uke',
     add: 'Legg til',
     timesPerWeek: 'ganger per uke',
     editCount: 'Rediger antall',
@@ -240,7 +235,6 @@ export const translations: Record<Lang, Translations> = {
     todoConnect: 'Koble til Microsoft-konto',
     todoConnecting: 'Kobler til...',
     todoSelectList: 'Velg handleliste',
-    todoNoListSelected: '— Velg liste —',
     todoAddToList: 'Legg i handleliste',
     todoIngredients: 'Ingredienser',
     todoIngredientsDesc: (listName) => `Velg ingredienser å legge til i «${listName}»`,
@@ -250,10 +244,8 @@ export const translations: Record<Lang, Translations> = {
     todoFetchFailed: 'Kunne ikke hente ingredienser fra oppskriften',
     todoSelectAll: 'Velg alle',
     todoDeselectAll: 'Fjern alle',
-    todoNotConnected: 'Ikke koblet til',
     todoLoadingLists: 'Henter lister...',
     todoListSaved: 'Handleliste lagret!',
-    servings: 'porsjoner',
     tasksForWeek: 'Dine oppgaver for uken',
     weeklyProgress: 'Ukens fremdrift',
     times: 'ganger',
@@ -346,7 +338,6 @@ export const translations: Record<Lang, Translations> = {
     featureMessagesDesc: 'Leave messages for the family on the home screen',
     addTaskSection: 'Add new task',
     taskNamePlaceholder: 'Task name',
-    timesPerWeekTitle: 'Number of times per week',
     add: 'Add',
     timesPerWeek: 'times per week',
     editCount: 'Edit count',
@@ -390,7 +381,6 @@ export const translations: Record<Lang, Translations> = {
     todoConnect: 'Connect Microsoft account',
     todoConnecting: 'Connecting...',
     todoSelectList: 'Select shopping list',
-    todoNoListSelected: '— Select list —',
     todoAddToList: 'Add to shopping list',
     todoIngredients: 'Ingredients',
     todoIngredientsDesc: (listName) => `Select ingredients to add to "${listName}"`,
@@ -400,10 +390,8 @@ export const translations: Record<Lang, Translations> = {
     todoFetchFailed: 'Could not fetch ingredients from recipe',
     todoSelectAll: 'Select all',
     todoDeselectAll: 'Deselect all',
-    todoNotConnected: 'Not connected',
     todoLoadingLists: 'Loading lists...',
     todoListSaved: 'Shopping list saved!',
-    servings: 'servings',
     tasksForWeek: 'Your tasks for the week',
     weeklyProgress: 'Weekly progress',
     times: 'times',
