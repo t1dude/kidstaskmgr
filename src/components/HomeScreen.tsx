@@ -677,7 +677,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 </p>
                 {ingredientModal.recipeYield && (
                   <p className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                    {ingredientModal.recipeYield} {t.servings}
+                    {ingredientModal.recipeYield}
                   </p>
                 )}
               </div>
