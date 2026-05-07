@@ -2,6 +2,12 @@
 
 # Changelog
 
+## v1.8.0 – PWA install prompt (2026-05-07)
+- Mobile banner prompts iOS and Android users to add the app to their home screen
+- iOS: shows Share → "Add to Home Screen" instructions
+- Android: shows manual instructions (Chrome menu → Add to Home Screen) immediately; upgrades to a one-tap Install button if Chrome's install prompt is available
+- Banner dismissed for 30 days; not shown if already running as installed app
+
 ## v1.7.2 – Recipe servings fix (2026-05-07)
 - Fix: ingredient modal was showing "4 servings servings" — the unit is already included in the recipe data, so the extra label is removed
 

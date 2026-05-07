@@ -2,6 +2,12 @@
 
 # Endringslogg
 
+## v1.8.0 – PWA-installasjonsmelding (2026-05-07)
+- Banner på mobil oppfordrer iOS- og Android-brukere til å legge appen til på hjemskjermen
+- iOS: viser instruksjon for Del → «Legg til på hjemskjermen»
+- Android: viser manuell instruksjon (Chrome-meny → Legg til på startskjermen) umiddelbart; oppgraderes til én-klikks installasjon hvis Chrome sender installasjonshendelse
+- Banneret avvises i 30 dager; vises ikke hvis appen allerede er installert
+
 ## v1.7.2 – Porsjonsfikser (2026-05-07)
 - Fiks: ingrediensmodalen viste «4 porsjoner porsjoner» – enheten ligger allerede i oppskriftsdataene, så den ekstra etiketten er fjernet
 
