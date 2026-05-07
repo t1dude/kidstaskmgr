@@ -3,6 +3,7 @@ import { HomeScreen } from './components/HomeScreen';
 import { ChildView } from './components/ChildView';
 import { AdminView } from './components/AdminView';
 import { PinModal } from './components/PinModal';
+import { PWAPrompt } from './components/PWAPrompt';
 import { api } from './lib/api';
 import type { Child } from './lib/api';
 
@@ -99,6 +100,8 @@ function App() {
           onCancel={() => setShowPinModal(false)}
         />
       )}
+
+      <PWAPrompt />
     </>
   );
 }

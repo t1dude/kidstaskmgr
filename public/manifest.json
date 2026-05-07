@@ -1,0 +1,17 @@
+{
+  "name": "Ukeplan for familien",
+  "short_name": "Ukeplan",
+  "description": "Familieapp for ukeplanlegging – oppgaver, kalender og middagsplan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus, Globe, ShoppingCart, Loader2, Check } from 'lucide-react';
-import type { Child, CalendarEvent, Task, Meal, Message, TodoStatus } from '../lib/api';
+import type { Child, CalendarEvent, Meal, Message, TodoStatus } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 import { useLanguage } from '../lib/LanguageContext';
 

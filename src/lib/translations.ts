@@ -130,6 +130,12 @@ export interface Translations {
   signingIn: string;
   waitSeconds: (n: number) => string;
   signIn: string;
+  pwaInstallTitle: string;
+  pwaInstallAndroid: string;
+  pwaInstallIOSStep1: string;
+  pwaInstallIOSStep2: string;
+  pwaInstallButton: string;
+  pwaInstallDismiss: string;
   tips: TipMessages;
 }
 
@@ -257,6 +263,12 @@ export const translations: Record<Lang, Translations> = {
     signingIn: 'Logger inn...',
     waitSeconds: (n) => `Venter (${n}s)`,
     signIn: 'Logg inn',
+    pwaInstallTitle: 'Legg til på hjemskjermen',
+    pwaInstallAndroid: 'Installer appen for raskere tilgang – fungerer som en vanlig app.',
+    pwaInstallIOSStep1: 'Trykk på',
+    pwaInstallIOSStep2: 'og velg «Legg til på hjemskjermen».',
+    pwaInstallButton: 'Installer',
+    pwaInstallDismiss: 'Ikke nå',
     tips: {
       notStarted: (title) => [
         `Du har ikke startet med "${title}" ennå. Kanskje du kan ta den i dag?`,
@@ -403,6 +415,12 @@ export const translations: Record<Lang, Translations> = {
     signingIn: 'Signing in...',
     waitSeconds: (n) => `Wait (${n}s)`,
     signIn: 'Sign in',
+    pwaInstallTitle: 'Add to Home Screen',
+    pwaInstallAndroid: 'Install the app for faster access – works like a native app.',
+    pwaInstallIOSStep1: 'Tap the',
+    pwaInstallIOSStep2: 'button, then choose "Add to Home Screen".',
+    pwaInstallButton: 'Install',
+    pwaInstallDismiss: 'Not now',
     tips: {
       notStarted: (title) => [
         `You haven't started "${title}" yet. Maybe you can do it today?`,
