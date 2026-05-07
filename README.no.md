@@ -60,6 +60,33 @@ Sesjonstokenet varer i 8 timer og lagres i `localStorage`.
 
 Feilede innloggingsforsøk gir progressive sperringer: 3 feil → 1 min, 6 → 5 min, 10 → 30 min, 15 → 2 timer.
 
+## Kalenderintegrasjon
+
+Appen viser hendelser fra alle kalendere som tilbyr en iCal-feed — Google Calendar, Outlook, Apple Calendar og andre.
+
+### 1 – Finn iCal-URLen din
+
+**Google Calendar**
+1. Åpne [calendar.google.com](https://calendar.google.com) og gå til **Innstillinger**.
+2. Klikk på kalenderen du vil bruke, og scroll ned til **Integrer kalender**.
+3. Kopier **Hemmelig adresse i iCal-format** (holder feeden privat).
+
+**Outlook / Microsoft 365**
+1. Gå til [outlook.live.com](https://outlook.live.com) → **Innstillinger → Vis alle Outlook-innstillinger → Kalender → Delte kalendere**.
+2. Under **Publiser en kalender**, velg kalender og tillatelsesnivå, klikk **Publiser**.
+3. Kopier **ICS**-lenken.
+
+**Apple Calendar (iCloud)**
+1. Åpne [icloud.com/calendar](https://icloud.com/calendar) og klikk delingsikonet ved siden av en kalender.
+2. Aktiver **Offentlig kalender** og kopier lenken.
+
+### 2 – Legg til URLen i appen
+
+1. Åpne appen og gå til **Innstillinger → Kalender**.
+2. Lim inn iCal-URLen og lagre.
+
+Hendelser de neste 14 dagene vises på forsiden. Kalenderen oppdateres automatisk hvert 5. minutt.
+
 ## Microsoft To-Do-integrasjon
 
 Med integrasjonen kan du legge ingredienser fra Matprat-oppskrifter direkte i en delt Microsoft To-Do-liste (f.eks. en felles handleliste). Én autorisasjon gjelder hele husstanden – ingen per-enhet-innlogging.

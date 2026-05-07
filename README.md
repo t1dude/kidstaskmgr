@@ -60,6 +60,33 @@ The session token lasts 8 hours and is stored in `localStorage`.
 
 Failed login attempts trigger progressive lockouts: 3 failures → 1 min, 6 → 5 min, 10 → 30 min, 15 → 2 hours.
 
+## Calendar integration
+
+The app displays events from any calendar that provides an iCal feed — Google Calendar, Outlook, Apple Calendar, and others.
+
+### 1 – Get your iCal URL
+
+**Google Calendar**
+1. Open [calendar.google.com](https://calendar.google.com) and go to **Settings**.
+2. Click the calendar you want to share, then scroll to **Integrate calendar**.
+3. Copy the **Secret address in iCal format** (keeps the feed private).
+
+**Outlook / Microsoft 365**
+1. Go to [outlook.live.com](https://outlook.live.com) → **Settings → View all Outlook settings → Calendar → Shared calendars**.
+2. Under **Publish a calendar**, select a calendar and permission level, then click **Publish**.
+3. Copy the **ICS** link.
+
+**Apple Calendar (iCloud)**
+1. Open [icloud.com/calendar](https://icloud.com/calendar) and click the share icon next to a calendar.
+2. Enable **Public Calendar** and copy the link.
+
+### 2 – Add the URL in the app
+
+1. Open the app and go to **Settings → Calendar**.
+2. Paste the iCal URL and save.
+
+Events from the next 14 days are shown on the home screen. The calendar refreshes automatically every 5 minutes.
+
 ## Microsoft To-Do integration
 
 The integration lets you add ingredients from Matprat recipes directly to a shared Microsoft To-Do list (e.g. a household shopping list). One authorization covers the whole household – no per-device login required.
