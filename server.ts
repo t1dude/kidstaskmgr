@@ -442,6 +442,7 @@ app.delete('/api/task-completions/:id', (req, res) => {
 app.delete('/api/reset-week', requireAuth, (req, res) => {
   try {
     db.prepare('DELETE FROM task_completions').run();
+    db.prepare('DELETE FROM meal_plan').run();
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed to reset week' }); }
 });

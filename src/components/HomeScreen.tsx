@@ -130,33 +130,6 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     setCalendarRefreshing(false);
   }
 
-  function getMealIcon(name: string): string {
-    const n = name.toLowerCase();
-    if (n.includes('taco')) return '🌮';
-    if (n.includes('pizza')) return '🍕';
-    if (n.includes('pasta') || n.includes('spagetti') || n.includes('spaghetti') || n.includes('lasagne') || n.includes('carbonara')) return '🍝';
-    if (n.includes('burger') || n.includes('hamburger')) return '🍔';
-    if (n.includes('sushi')) return '🍣';
-    if (n.includes('salat') || n.includes('salad')) return '🥗';
-    if (n.includes('suppe') || n.includes('soup')) return '🍲';
-    if (n.includes('kylling') || n.includes('chicken')) return '🍗';
-    if (n.includes('laks') || n.includes('salmon') || n.includes('torsk') || n.includes('sei') || n.includes('fiskepinn') || n.includes('fiskebolle')) return '🐟';
-    if (n.includes('fisk')) return '🐟';
-    if (n.includes('ribs') || n.includes('biff') || n.includes('steak') || n.includes('svin')) return '🥩';
-    if (n.includes('wrap')) return '🌯';
-    if (n.includes('sandwich') || n.includes('toast')) return '🥪';
-    if (n.includes('wok')) return '🥢';
-    if (n.includes('curry')) return '🍛';
-    if (n.includes('grøt')) return '🥣';
-    if (n.includes('pannekake') || n.includes('pancake') || n.includes('vaffel')) return '🥞';
-    if (n.includes('pølse') || n.includes('hotdog') || n.includes('grillpølse')) return '🌭';
-    if (n.includes('kebab')) return '🥙';
-    if (n.includes('reke') || n.includes('sjømat')) return '🦐';
-    if (n.includes('nudel') || n.includes('ramen')) return '🍜';
-    if (n.includes('egg') || n.includes('omelett')) return '🍳';
-    return '🍽️';
-  }
-
   async function loadMeals() {
     try {
       const data = await api.getMeals();
@@ -535,11 +508,15 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                       <select
                         value={selectedMealId}
                         onChange={(e) => setMealForDay(day.date, e.target.value)}
-                        className={`flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                          darkMode
-                            ? 'bg-gray-600 border-gray-500 text-gray-100 focus:border-orange-400'
-                            : 'bg-white border-gray-300 text-gray-800 focus:border-orange-400'
-                        } focus:outline-none focus:ring-1 focus:ring-orange-400`}
+                        className={`flex-1 min-w-0 px-3 py-1.5 rounded-lg text-sm border transition-colors focus:outline-none focus:ring-1 focus:ring-orange-400 ${
+                          selectedMealId
+                            ? darkMode
+                              ? 'bg-gray-600 border-gray-500 text-white font-medium focus:border-orange-400'
+                              : 'bg-white border-gray-400 text-gray-900 font-medium focus:border-orange-400'
+                            : darkMode
+                              ? 'bg-gray-600 border-gray-500 text-gray-400 focus:border-orange-400'
+                              : 'bg-white border-gray-300 text-gray-400 focus:border-orange-400'
+                        }`}
                       >
                         <option value="">{t.chooseDinner}</option>
                         {meals.map((meal) => (
@@ -547,9 +524,6 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                         ))}
                       </select>
                       <div className="shrink-0 flex items-center gap-1">
-                        <span className="text-lg w-7 text-center">
-                          {selectedMeal ? getMealIcon(selectedMeal.name) : ''}
-                        </span>
                         {selectedMeal?.recipe_url ? (
                           <a
                             href={selectedMeal.recipe_url}
