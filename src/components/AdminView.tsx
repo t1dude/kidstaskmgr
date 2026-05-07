@@ -53,6 +53,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   const [todoLists, setTodoLists] = useState<TodoList[]>([]);
   const [todoListsLoading, setTodoListsLoading] = useState(false);
   const [todoConnecting, setTodoConnecting] = useState(false);
+  const todoConnectingRef = useRef(false);
 
   useEffect(() => {
     if (!emojiPickerOpen) return;
@@ -94,29 +95,37 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
 
   async function connectTodo() {
     setTodoConnecting(true);
+    todoConnectingRef.current = true;
     try {
       const { authUrl } = await api.getTodoAuthUrl();
-      const popup = window.open(authUrl, 'ms-oauth', 'width=520,height=680,noopener=0');
-      const onMessage = (e: MessageEvent) => {
-        if (e.data === 'todo-auth-success' || e.data === 'todo-auth-error') {
-          window.removeEventListener('message', onMessage);
-          clearInterval(pollClosed);
-          setTodoConnecting(false);
-          loadTodoStatus().then(() => {
-            if (e.data === 'todo-auth-success') loadTodoLists();
-          });
+      const popup = window.open(authUrl, 'ms-oauth', 'width=520,height=680');
+
+      let done = false;
+      const finish = async () => {
+        if (done) return;
+        done = true;
+        todoConnectingRef.current = false;
+        setTodoConnecting(false);
+        clearInterval(poll);
+        window.removeEventListener('message', onMessage);
+        const status = await api.getTodoStatus().catch(() => null);
+        if (status) {
+          setTodoStatus(status);
+          if (status.connected) loadTodoLists();
         }
       };
+
+      const onMessage = (e: MessageEvent) => {
+        if (e.data === 'todo-auth-success' || e.data === 'todo-auth-error') finish();
+      };
       window.addEventListener('message', onMessage);
-      const pollClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(pollClosed);
-          window.removeEventListener('message', onMessage);
-          setTodoConnecting(false);
-          loadTodoStatus();
-        }
-      }, 600);
+
+      const poll = setInterval(() => { if (popup?.closed) finish(); }, 800);
+
+      // Safety timeout: stop after 5 minutes
+      setTimeout(() => { if (!done) finish(); }, 5 * 60 * 1000);
     } catch (err) {
+      todoConnectingRef.current = false;
       setTodoConnecting(false);
       handleSaveError(err);
     }

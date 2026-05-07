@@ -790,17 +790,18 @@ app.post('/api/todo/add', async (req, res) => {
     if (!listId) return res.status(400).json({ error: 'Ingen handleliste valgt' });
     const { items } = req.body as { items: string[] };
     if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items required' });
-    const results = await Promise.all(
-      items.slice(0, 50).map(item =>
-        fetch(`https://graph.microsoft.com/v1.0/me/todo/lists/${encodeURIComponent(listId)}/tasks`, {
+    let added = 0, failed = 0;
+    for (const item of items.slice(0, 50)) {
+      try {
+        const r = await fetch(`https://graph.microsoft.com/v1.0/me/todo/lists/${encodeURIComponent(listId)}/tasks`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: String(item).slice(0, 255) }),
-        })
-      )
-    );
-    const failed = results.filter(r => !r.ok).length;
-    res.json({ success: true, added: results.length - failed, failed });
+        });
+        r.ok ? added++ : failed++;
+      } catch { failed++; }
+    }
+    res.json({ success: true, added, failed });
   } catch { res.status(500).json({ error: 'Kunne ikke legge til i handleliste' }); }
 });
 
