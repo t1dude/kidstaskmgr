@@ -2,8 +2,11 @@
 
 # Changelog
 
+## v1.7.2 – Recipe servings fix (2026-05-07)
+- Fix: ingredient modal was showing "4 servings servings" — the unit is already included in the recipe data, so the extra label is removed
+
 ## v1.7.1 – Recipe servings info (2026-05-07)
-- Ingredient modal now shows the recipe's serving count on its own line (e.g. "4 servings") so you know what quantities the ingredients are based on
+- Ingredient modal now shows the recipe's serving count on its own line so you know what quantities the ingredients are based on
 
 ## v1.7.0 – Microsoft To-Do shopping list integration (2026-05-07)
 - Add ingredients from Matprat recipes directly to a shared Microsoft To-Do list

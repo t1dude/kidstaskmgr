@@ -2,8 +2,11 @@
 
 # Endringslogg
 
+## v1.7.2 – Porsjonsfikser (2026-05-07)
+- Fiks: ingrediensmodalen viste «4 porsjoner porsjoner» – enheten ligger allerede i oppskriftsdataene, så den ekstra etiketten er fjernet
+
 ## v1.7.1 – Porsjonsinformasjon i oppskrift (2026-05-07)
-- Ingrediensmodalen viser nå antall porsjoner oppskriften er beregnet for på en egen linje (f.eks. «4 porsjoner»), slik at du vet hva mengdene gjelder
+- Ingrediensmodalen viser nå antall porsjoner oppskriften er beregnet for på en egen linje, slik at du vet hva mengdene gjelder
 
 ## v1.7.0 – Microsoft To-Do handlelisteintegrasjon (2026-05-07)
 - Legg ingredienser fra Matprat-oppskrifter direkte i en delt Microsoft To-Do-liste
