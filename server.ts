@@ -826,6 +826,7 @@ app.get('/api/recipe-ingredients', async (req, res) => {
     res.json({
       title: recipe.name || '',
       ingredients: (recipe.recipeIngredient as string[]).slice(0, 100),
+      recipeYield: recipe.recipeYield ?? null,
     });
   } catch { res.status(500).json({ error: 'Kunne ikke hente ingredienser' }); }
 });

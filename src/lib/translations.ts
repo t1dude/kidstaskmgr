@@ -122,6 +122,7 @@ export interface Translations {
   todoNotConnected: string;
   todoLoadingLists: string;
   todoListSaved: string;
+  servings: string;
   tasksForWeek: string;
   weeklyProgress: string;
   times: string;
@@ -252,6 +253,7 @@ export const translations: Record<Lang, Translations> = {
     todoNotConnected: 'Ikke koblet til',
     todoLoadingLists: 'Henter lister...',
     todoListSaved: 'Handleliste lagret!',
+    servings: 'porsjoner',
     tasksForWeek: 'Dine oppgaver for uken',
     weeklyProgress: 'Ukens fremdrift',
     times: 'ganger',
@@ -401,6 +403,7 @@ export const translations: Record<Lang, Translations> = {
     todoNotConnected: 'Not connected',
     todoLoadingLists: 'Loading lists...',
     todoListSaved: 'Shopping list saved!',
+    servings: 'servings',
     tasksForWeek: 'Your tasks for the week',
     weeklyProgress: 'Weekly progress',
     times: 'times',

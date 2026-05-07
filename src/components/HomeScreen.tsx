@@ -31,7 +31,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [todoStatus, setTodoStatus] = useState<TodoStatus | null>(null);
-  const [ingredientModal, setIngredientModal] = useState<{ meal: Meal; ingredients: string[]; title: string } | null>(null);
+  const [ingredientModal, setIngredientModal] = useState<{ meal: Meal; ingredients: string[]; title: string; recipeYield: string | number | null } | null>(null);
   const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
   const [ingredientLoading, setIngredientLoading] = useState<string | null>(null);
   const [addingToList, setAddingToList] = useState(false);
@@ -205,7 +205,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     setIngredientLoading(meal.id);
     try {
       const data = await api.getRecipeIngredients(meal.recipe_url);
-      setIngredientModal({ meal, ingredients: data.ingredients, title: data.title || meal.name });
+      setIngredientModal({ meal, ingredients: data.ingredients, title: data.title || meal.name, recipeYield: data.recipeYield ?? null });
       setSelectedIngredients(new Set(data.ingredients));
     } catch {
       alert(t.todoFetchFailed);
@@ -674,6 +674,9 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 <h2 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{t.todoIngredients}</h2>
                 <p className={`text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {t.todoIngredientsDesc(todoStatus?.listName ?? '')}
+                  {ingredientModal.recipeYield && (
+                    <span className="ml-2 text-xs opacity-70">· {ingredientModal.recipeYield} {t.servings}</span>
+                  )}
                 </p>
               </div>
               <button onClick={() => setIngredientModal(null)} className={`flex-shrink-0 ml-2 p-1 rounded-full ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>

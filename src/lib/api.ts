@@ -84,6 +84,7 @@ export interface TodoList {
 export interface RecipeIngredients {
   title: string;
   ingredients: string[];
+  recipeYield: string | number | null;
 }
 
 export interface RecipeInspiration {
