@@ -92,6 +92,12 @@ export const api = {
     if (!response.ok) throw new Error('Failed to update settings');
   },
 
+  async validateToken(): Promise<boolean> {
+    if (!localStorage.getItem('adminToken')) return false;
+    const response = await fetch(`${API_URL}/auth/validate`, { headers: authHeaders() });
+    return response.ok;
+  },
+
   async login(pin: string): Promise<{ token: string }> {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',

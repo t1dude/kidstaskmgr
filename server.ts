@@ -266,6 +266,10 @@ app.post('/api/auth/login', (req, res) => {
   res.json({ token });
 });
 
+app.get('/api/auth/validate', requireAuth, (req, res) => {
+  res.json({ valid: true });
+});
+
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   try {

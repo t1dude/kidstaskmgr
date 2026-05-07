@@ -19,10 +19,14 @@ function App() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
-    api.getSettings()
-      .then(({ requirePinForHome }) => {
-        const hasToken = !!localStorage.getItem('adminToken');
-        setHomeUnlocked(!requirePinForHome || hasToken);
+    const token = localStorage.getItem('adminToken');
+    Promise.all([
+      api.getSettings(),
+      token ? api.validateToken() : Promise.resolve(false),
+    ])
+      .then(([{ requirePinForHome }, tokenValid]) => {
+        if (token && !tokenValid) localStorage.removeItem('adminToken');
+        setHomeUnlocked(!requirePinForHome || tokenValid);
       })
       .catch(() => setHomeUnlocked(true))
       .finally(() => setSettingsLoaded(true));
