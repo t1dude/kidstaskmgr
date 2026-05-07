@@ -2,6 +2,10 @@
 
 # Changelog
 
+## v1.7.3 – Dependency upgrades (2026-05-07)
+- Express 4→5.2.1, express-rate-limit 7→8.5.1, lucide-react 0.563→1.14.0, React 18→19.2.6
+- 0 vulnerabilities
+
 ## v1.7.2 – Recipe servings fix (2026-05-07)
 - Fix: ingredient modal was showing "4 servings servings" — the unit is already included in the recipe data, so the extra label is removed
 
