@@ -2,10 +2,6 @@
 
 # Endringslogg
 
-## v1.7.3 – Avhengighetsoppdateringer (2026-05-07)
-- Express 4→5.2.1, express-rate-limit 7→8.5.1, lucide-react 0.563→1.14.0, React 18→19.2.6
-- 0 sårbarheter
-
 ## v1.7.2 – Porsjonsfikser (2026-05-07)
 - Fiks: ingrediensmodalen viste «4 porsjoner porsjoner» – enheten ligger allerede i oppskriftsdataene, så den ekstra etiketten er fjernet
 
