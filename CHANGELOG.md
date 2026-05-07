@@ -2,6 +2,11 @@
 
 # Changelog
 
+## v1.8.1 – Meal plan improvements (2026-05-07)
+- Reset week now also clears the meal plan
+- Removed food emoji from meal plan rows to give the meal name more space
+- Selected meal shown in medium-weight text with stronger color; empty days shown in muted gray
+
 ## v1.8.0 – PWA install prompt (2026-05-07)
 - Mobile banner prompts iOS and Android users to add the app to their home screen
 - iOS: shows Share → "Add to Home Screen" instructions

@@ -2,6 +2,11 @@
 
 # Endringslogg
 
+## v1.8.1 – Forbedringer i matplanen (2026-05-07)
+- Nullstill uke sletter nå også matplanen for uken
+- Mat-emoji fjernet fra middagsrader slik at måltidsnavnet får mer plass
+- Valgt måltid vises med halvfet tekst og sterkere farge; dager uten middagsvalg vises i dempet grå
+
 ## v1.8.0 – PWA-installasjonsmelding (2026-05-07)
 - Banner på mobil oppfordrer iOS- og Android-brukere til å legge appen til på hjemskjermen
 - iOS: viser instruksjon for Del → «Legg til på hjemskjermen»
