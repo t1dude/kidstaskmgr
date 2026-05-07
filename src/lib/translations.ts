@@ -132,6 +132,8 @@ export interface Translations {
   signIn: string;
   pwaInstallTitle: string;
   pwaInstallAndroid: string;
+  pwaInstallAndroidManual1: string;
+  pwaInstallAndroidManual2: string;
   pwaInstallIOSStep1: string;
   pwaInstallIOSStep2: string;
   pwaInstallButton: string;
@@ -265,6 +267,8 @@ export const translations: Record<Lang, Translations> = {
     signIn: 'Logg inn',
     pwaInstallTitle: 'Legg til på hjemskjermen',
     pwaInstallAndroid: 'Installer appen for raskere tilgang – fungerer som en vanlig app.',
+    pwaInstallAndroidManual1: 'Trykk på',
+    pwaInstallAndroidManual2: 'i Chrome og velg «Legg til på startskjermen».',
     pwaInstallIOSStep1: 'Trykk på',
     pwaInstallIOSStep2: 'og velg «Legg til på hjemskjermen».',
     pwaInstallButton: 'Installer',
@@ -417,6 +421,8 @@ export const translations: Record<Lang, Translations> = {
     signIn: 'Sign in',
     pwaInstallTitle: 'Add to Home Screen',
     pwaInstallAndroid: 'Install the app for faster access – works like a native app.',
+    pwaInstallAndroidManual1: 'Tap the',
+    pwaInstallAndroidManual2: 'menu in Chrome and choose "Add to Home screen".',
     pwaInstallIOSStep1: 'Tap the',
     pwaInstallIOSStep2: 'button, then choose "Add to Home Screen".',
     pwaInstallButton: 'Install',
