@@ -2,6 +2,17 @@
 
 # Endringslogg
 
+## v1.7.0 – Microsoft To-Do handlelisteintegrasjon (2026-05-07)
+- Legg ingredienser fra Matprat-oppskrifter direkte i en delt Microsoft To-Do-liste
+- OAuth 2.0 autorisasjonskode-flyt — koble til én gang per husstand, ingen innlogging per enhet
+- Ingredienser hentes fra Matprat JSON-LD oppskrift-schema (ingen skraping)
+- Ingrediens-modal med avkrysningsbokser per ingrediens: velg/fjern før du legger til i listen
+- Handlekurv-knapp vises på middagsrader med oppskrifts-URL når To-Do er koblet til
+- Admin-innstillinger: koble til/fra Microsoft-konto, velg hvilken To-Do-liste som brukes
+- Token-oppdatering håndteres automatisk på serversiden; tokens lagres i app-databasen
+- Nye miljøvariabler: `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `APP_URL` (se docker-compose.yml)
+- Nye endepunkter: `/api/todo/*`, `/api/recipe-ingredients`
+
 ## v1.6.1 – Mobilfikser og sesjonsvalidering (2026-05-07)
 - Fiks: oppgaver, barn og måltider ble stille ikke lagret på mobil når sesjonen var utløpt – API-kall kaster nå feil ved ikke-OK svar og viser en feilmelding
 - Fiks: utløpte sesjoner oppdages nå ved oppstart – gamle tokens ryddes bort før brukeren går inn i admin-panelet, slik at PIN-dialogen vises med en gang fremfor etter mislykkede lagringsforøk

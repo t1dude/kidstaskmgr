@@ -2,6 +2,17 @@
 
 # Changelog
 
+## v1.7.0 – Microsoft To-Do shopping list integration (2026-05-07)
+- Add ingredients from Matprat recipes directly to a shared Microsoft To-Do list
+- OAuth 2.0 authorization code flow — connect once per household, no per-device login
+- Ingredient extraction from Matprat JSON-LD recipe schema (no scraping required)
+- Ingredient modal with per-item checkboxes: select/deselect before adding to list
+- Shopping cart button appears on meal plan rows with a recipe URL when To-Do is connected
+- Admin settings: connect/disconnect Microsoft account, choose which To-Do list to use
+- Token refresh handled automatically server-side; tokens stored in the app database
+- New env vars: `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `APP_URL` (see docker-compose.yml)
+- New endpoints: `/api/todo/*`, `/api/recipe-ingredients`
+
 ## v1.6.1 – Mobile save fixes and session validation (2026-05-07)
 - Fix: tasks, children, and meals silently failed to save on mobile when the session had expired — API calls now throw on non-OK responses and show an error message
 - Fix: expired sessions now detected on app startup — stale tokens are cleared before the user enters the admin panel, so the PIN prompt appears upfront instead of after failed save attempts

@@ -8,6 +8,13 @@ services:
       - DB_PATH=/app/data/tasks.db
       - PORT=3001
       - ADMIN_PIN=1234
+      # Microsoft To-Do integration (optional)
+      # Register a free app at https://portal.azure.com → Entra ID → App registrations
+      # Account type: Personal Microsoft accounts only | Platform: Web | Redirect URI: {APP_URL}/api/todo/callback
+      # Required permissions: Tasks.ReadWrite, User.Read (delegated)
+      #- MICROSOFT_CLIENT_ID=your-client-id-here
+      #- MICROSOFT_CLIENT_SECRET=your-client-secret-here
+      #- APP_URL=http://your-server-address:3001
     volumes:
       - task-data:/app/data
     restart: unless-stopped

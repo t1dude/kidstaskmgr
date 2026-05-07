@@ -68,6 +68,24 @@ export interface Message {
   created_at: string;
 }
 
+export interface TodoStatus {
+  configured: boolean;
+  connected: boolean;
+  accountName: string | null;
+  listId: string | null;
+  listName: string | null;
+}
+
+export interface TodoList {
+  id: string;
+  name: string;
+}
+
+export interface RecipeIngredients {
+  title: string;
+  ingredients: string[];
+}
+
 export interface RecipeInspiration {
   title: string;
   url: string;
@@ -251,6 +269,53 @@ export const api = {
   async getMealInspiration(query: string): Promise<RecipeInspiration[]> {
     const response = await fetch(`${API_URL}/meal-inspiration?q=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error('Failed to fetch inspiration');
+    return response.json();
+  },
+
+  async getTodoStatus(): Promise<TodoStatus> {
+    const response = await fetch(`${API_URL}/todo/status`);
+    return response.json();
+  },
+
+  async getTodoAuthUrl(): Promise<{ authUrl: string }> {
+    const response = await fetch(`${API_URL}/todo/auth-url`, { headers: authHeaders() });
+    if (!response.ok) throw new Error(`${response.status}`);
+    return response.json();
+  },
+
+  async disconnectTodo(): Promise<void> {
+    const response = await fetch(`${API_URL}/todo/disconnect`, { method: 'DELETE', headers: authHeaders() });
+    if (!response.ok) throw new Error(`${response.status}`);
+  },
+
+  async getTodoLists(): Promise<TodoList[]> {
+    const response = await fetch(`${API_URL}/todo/lists`, { headers: authHeaders() });
+    if (!response.ok) throw new Error(`${response.status}`);
+    return response.json();
+  },
+
+  async setTodoList(listId: string, listName: string): Promise<void> {
+    const response = await fetch(`${API_URL}/todo/list`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ listId, listName }),
+    });
+    if (!response.ok) throw new Error(`${response.status}`);
+  },
+
+  async addTodoItems(items: string[]): Promise<{ added: number; failed: number }> {
+    const response = await fetch(`${API_URL}/todo/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    if (!response.ok) throw new Error(`${response.status}`);
+    return response.json();
+  },
+
+  async getRecipeIngredients(url: string): Promise<RecipeIngredients> {
+    const response = await fetch(`${API_URL}/recipe-ingredients?url=${encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error(`${response.status}`);
     return response.json();
   },
 

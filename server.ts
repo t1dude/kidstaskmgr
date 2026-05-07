@@ -13,12 +13,19 @@ const app = express();
 app.set('trust proxy', 1);
 const port = process.env.PORT || 3001;
 
+// ── Microsoft To-Do config ────────────────────────────────────────────────────
+const MS_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
+const MS_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
+const APP_URL = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
+const MS_REDIRECT_URI = `${APP_URL}/api/todo/callback`;
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 if (!process.env.ADMIN_PIN) {
   console.warn('⚠️  ADVARSEL: ADMIN_PIN er ikke satt – standard PIN "1234" brukes. Sett ADMIN_PIN i miljøvariablene!');
 }
 const sessions = new Map<string, Date>(); // token → expiry
+const oauthStates = new Map<string, number>(); // state → expiry ms
 
 interface LoginAttempt { count: number; lockedUntil: number; }
 const loginAttempts = new Map<string, LoginAttempt>();
@@ -175,6 +182,52 @@ try { db.exec('ALTER TABLE meals ADD COLUMN recipe_url TEXT'); } catch { /* alre
 
 function generateId(): string {
   return randomUUID();
+}
+
+// ── App settings helpers ──────────────────────────────────────────────────────
+function getSettingStr(key: string): string | null {
+  const row = db.prepare('SELECT value FROM app_settings WHERE key = ?').get(key) as { value: string } | undefined;
+  if (!row) return null;
+  try { return JSON.parse(row.value); } catch { return row.value; }
+}
+
+function setSetting(key: string, value: string | null) {
+  if (value === null) {
+    db.prepare('DELETE FROM app_settings WHERE key = ?').run(key);
+  } else {
+    db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)').run(key, JSON.stringify(value));
+  }
+}
+
+// ── Microsoft To-Do helpers ───────────────────────────────────────────────────
+function clearMsTokens() {
+  ['ms_access_token', 'ms_refresh_token', 'ms_token_expiry', 'ms_account_name', 'ms_list_id', 'ms_list_name']
+    .forEach(k => setSetting(k, null));
+}
+
+async function getMsAccessToken(): Promise<string | null> {
+  const access = getSettingStr('ms_access_token');
+  const refresh = getSettingStr('ms_refresh_token');
+  if (!access || !refresh || !MS_CLIENT_ID || !MS_CLIENT_SECRET) return null;
+  const expiry = parseInt(getSettingStr('ms_token_expiry') || '0');
+  if (Date.now() + 5 * 60 * 1000 < expiry) return access;
+  try {
+    const r = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: MS_CLIENT_ID, client_secret: MS_CLIENT_SECRET,
+        grant_type: 'refresh_token', refresh_token: refresh,
+        scope: 'Tasks.ReadWrite User.Read offline_access',
+      }),
+    });
+    if (!r.ok) { clearMsTokens(); return null; }
+    const d = await r.json() as any;
+    setSetting('ms_access_token', d.access_token);
+    if (d.refresh_token) setSetting('ms_refresh_token', d.refresh_token);
+    setSetting('ms_token_expiry', String(Date.now() + d.expires_in * 1000));
+    return d.access_token;
+  } catch { return null; }
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────
@@ -631,6 +684,148 @@ app.get('/api/calendar-events', async (req, res) => {
     console.error('Failed to fetch calendar events:', error);
     res.json([]);
   }
+});
+
+// ── Microsoft To-Do integration ───────────────────────────────────────────────
+app.get('/api/todo/status', (req, res) => {
+  res.json({
+    configured: !!(MS_CLIENT_ID && MS_CLIENT_SECRET),
+    connected: !!(getSettingStr('ms_access_token') && getSettingStr('ms_refresh_token')),
+    accountName: getSettingStr('ms_account_name'),
+    listId: getSettingStr('ms_list_id'),
+    listName: getSettingStr('ms_list_name'),
+  });
+});
+
+app.get('/api/todo/auth-url', requireAuth, (req, res) => {
+  if (!MS_CLIENT_ID || !MS_CLIENT_SECRET)
+    return res.status(501).json({ error: 'Microsoft To-Do ikke konfigurert' });
+  const state = randomBytes(16).toString('hex');
+  oauthStates.set(state, Date.now() + 10 * 60 * 1000);
+  const params = new URLSearchParams({
+    client_id: MS_CLIENT_ID, response_type: 'code',
+    redirect_uri: MS_REDIRECT_URI,
+    scope: 'Tasks.ReadWrite User.Read offline_access',
+    response_mode: 'query', state,
+    prompt: 'select_account',
+  });
+  res.json({ authUrl: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}` });
+});
+
+app.get('/api/todo/callback', async (req, res) => {
+  const { code, state, error } = req.query as Record<string, string>;
+  const html = (msg: string, success: boolean) => res.send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Microsoft To-Do</title>
+<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+p{font-size:1.1rem;color:${success ? '#16a34a' : '#dc2626'}}</style></head>
+<body><p>${msg}</p>
+<script>
+  try { window.opener && window.opener.postMessage('${success ? 'todo-auth-success' : 'todo-auth-error'}','*'); }
+  catch(e){}
+  setTimeout(()=>window.close(),1200);
+</script></body></html>`);
+
+  if (error || !code || !state) return html('Autentisering avbrutt.', false);
+  const stateExpiry = oauthStates.get(state);
+  if (!stateExpiry || Date.now() > stateExpiry) return html('Ugyldig forespørsel – prøv igjen.', false);
+  oauthStates.delete(state);
+
+  try {
+    const tokenRes = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: MS_CLIENT_ID!, client_secret: MS_CLIENT_SECRET!,
+        code, grant_type: 'authorization_code', redirect_uri: MS_REDIRECT_URI,
+      }),
+    });
+    if (!tokenRes.ok) return html('Kunne ikke hente token. Prøv igjen.', false);
+    const tokenData = await tokenRes.json() as any;
+    setSetting('ms_access_token', tokenData.access_token);
+    setSetting('ms_refresh_token', tokenData.refresh_token);
+    setSetting('ms_token_expiry', String(Date.now() + tokenData.expires_in * 1000));
+    const userRes = await fetch('https://graph.microsoft.com/v1.0/me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (userRes.ok) {
+      const user = await userRes.json() as any;
+      setSetting('ms_account_name', user.displayName || user.userPrincipalName || 'Microsoft-konto');
+    }
+    html('Tilkoblet! Du kan lukke dette vinduet.', true);
+  } catch { html('Noe gikk galt. Prøv igjen.', false); }
+});
+
+app.delete('/api/todo/disconnect', requireAuth, (req, res) => {
+  clearMsTokens();
+  res.json({ success: true });
+});
+
+app.get('/api/todo/lists', requireAuth, async (req, res) => {
+  try {
+    const token = await getMsAccessToken();
+    if (!token) return res.status(401).json({ error: 'Ikke tilkoblet Microsoft To-Do' });
+    const r = await fetch('https://graph.microsoft.com/v1.0/me/todo/lists', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return res.status(r.status).json({ error: 'Kunne ikke hente lister' });
+    const data = await r.json() as any;
+    res.json((data.value as any[]).map(l => ({ id: l.id, name: l.displayName })));
+  } catch { res.status(500).json({ error: 'Kunne ikke hente To-Do-lister' }); }
+});
+
+app.put('/api/todo/list', requireAuth, (req, res) => {
+  const { listId, listName } = req.body;
+  if (!listId) return res.status(400).json({ error: 'listId required' });
+  setSetting('ms_list_id', listId);
+  setSetting('ms_list_name', listName || listId);
+  res.json({ success: true });
+});
+
+app.post('/api/todo/add', async (req, res) => {
+  try {
+    const token = await getMsAccessToken();
+    if (!token) return res.status(401).json({ error: 'Ikke tilkoblet Microsoft To-Do' });
+    const listId = getSettingStr('ms_list_id');
+    if (!listId) return res.status(400).json({ error: 'Ingen handleliste valgt' });
+    const { items } = req.body as { items: string[] };
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items required' });
+    const results = await Promise.all(
+      items.slice(0, 50).map(item =>
+        fetch(`https://graph.microsoft.com/v1.0/me/todo/lists/${encodeURIComponent(listId)}/tasks`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: String(item).slice(0, 255) }),
+        })
+      )
+    );
+    const failed = results.filter(r => !r.ok).length;
+    res.json({ success: true, added: results.length - failed, failed });
+  } catch { res.status(500).json({ error: 'Kunne ikke legge til i handleliste' }); }
+});
+
+// ── Recipe ingredients ────────────────────────────────────────────────────────
+app.get('/api/recipe-ingredients', async (req, res) => {
+  try {
+    const { url } = req.query as { url: string };
+    if (!url) return res.status(400).json({ error: 'url required' });
+    let parsed: URL;
+    try { parsed = new URL(url); } catch { return res.status(400).json({ error: 'Ugyldig URL' }); }
+    if (parsed.hostname !== 'www.matprat.no')
+      return res.status(400).json({ error: 'Kun Matprat.no-oppskrifter støttes' });
+    const r = await fetch(url, { headers: { 'User-Agent': 'kidstaskmgr/1.0' } });
+    if (!r.ok) return res.status(502).json({ error: 'Kunne ikke hente oppskrift' });
+    const html = await r.text();
+    const ldMatch = html.match(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/);
+    if (!ldMatch) return res.status(422).json({ error: 'Ingen oppskriftsdata funnet' });
+    const ld = JSON.parse(ldMatch[1]);
+    const recipe = Array.isArray(ld) ? (ld.find((i: any) => i['@type'] === 'Recipe') ?? ld[0]) : ld;
+    if (!Array.isArray(recipe?.recipeIngredient))
+      return res.status(422).json({ error: 'Ingen ingredienser funnet' });
+    res.json({
+      title: recipe.name || '',
+      ingredients: (recipe.recipeIngredient as string[]).slice(0, 100),
+    });
+  } catch { res.status(500).json({ error: 'Kunne ikke hente ingredienser' }); }
 });
 
 // 404 for unknown API routes (must be before static files to avoid returning HTML)

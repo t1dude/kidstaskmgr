@@ -101,6 +101,27 @@ export interface Translations {
   calendarSaveError: string;
   sessionExpired: string;
   saveFailed: string;
+  todoSection: string;
+  todoDesc: string;
+  todoNotConfigured: string;
+  todoConnectedAs: string;
+  todoDisconnect: string;
+  todoConnect: string;
+  todoConnecting: string;
+  todoSelectList: string;
+  todoNoListSelected: string;
+  todoAddToList: string;
+  todoIngredients: string;
+  todoIngredientsDesc: (listName: string) => string;
+  todoAdding: string;
+  todoAdded: (n: number) => string;
+  todoAddFailed: string;
+  todoFetchFailed: string;
+  todoSelectAll: string;
+  todoDeselectAll: string;
+  todoNotConnected: string;
+  todoLoadingLists: string;
+  todoListSaved: string;
   tasksForWeek: string;
   weeklyProgress: string;
   times: string;
@@ -210,6 +231,27 @@ export const translations: Record<Lang, Translations> = {
     calendarSaveError: 'Kunne ikke lagre kalenderinnstillinger',
     sessionExpired: 'Sesjonen er utløpt. Logg inn på nytt.',
     saveFailed: 'Kunne ikke lagre. Prøv igjen.',
+    todoSection: 'Microsoft To-Do',
+    todoDesc: 'Legg ingredienser fra middagsoppskrifter direkte i handlelisten din på Microsoft To-Do.',
+    todoNotConfigured: 'Ikke konfigurert. Legg til MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET og APP_URL i miljøvariablene.',
+    todoConnectedAs: 'Koblet til som',
+    todoDisconnect: 'Koble fra',
+    todoConnect: 'Koble til Microsoft-konto',
+    todoConnecting: 'Kobler til...',
+    todoSelectList: 'Velg handleliste',
+    todoNoListSelected: '— Velg liste —',
+    todoAddToList: 'Legg i handleliste',
+    todoIngredients: 'Ingredienser',
+    todoIngredientsDesc: (listName) => `Velg ingredienser å legge til i «${listName}»`,
+    todoAdding: 'Legger til...',
+    todoAdded: (n) => `${n} ingrediens${n === 1 ? '' : 'er'} lagt til!`,
+    todoAddFailed: 'Kunne ikke legge til i handleliste',
+    todoFetchFailed: 'Kunne ikke hente ingredienser fra oppskriften',
+    todoSelectAll: 'Velg alle',
+    todoDeselectAll: 'Fjern alle',
+    todoNotConnected: 'Ikke koblet til',
+    todoLoadingLists: 'Henter lister...',
+    todoListSaved: 'Handleliste lagret!',
     tasksForWeek: 'Dine oppgaver for uken',
     weeklyProgress: 'Ukens fremdrift',
     times: 'ganger',
@@ -338,6 +380,27 @@ export const translations: Record<Lang, Translations> = {
     calendarSaveError: 'Could not save calendar settings',
     sessionExpired: 'Session expired. Please log in again.',
     saveFailed: 'Could not save. Please try again.',
+    todoSection: 'Microsoft To-Do',
+    todoDesc: 'Add ingredients from dinner recipes directly to your shopping list in Microsoft To-Do.',
+    todoNotConfigured: 'Not configured. Add MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET and APP_URL to environment variables.',
+    todoConnectedAs: 'Connected as',
+    todoDisconnect: 'Disconnect',
+    todoConnect: 'Connect Microsoft account',
+    todoConnecting: 'Connecting...',
+    todoSelectList: 'Select shopping list',
+    todoNoListSelected: '— Select list —',
+    todoAddToList: 'Add to shopping list',
+    todoIngredients: 'Ingredients',
+    todoIngredientsDesc: (listName) => `Select ingredients to add to "${listName}"`,
+    todoAdding: 'Adding...',
+    todoAdded: (n) => `${n} ingredient${n === 1 ? '' : 's'} added!`,
+    todoAddFailed: 'Could not add to shopping list',
+    todoFetchFailed: 'Could not fetch ingredients from recipe',
+    todoSelectAll: 'Select all',
+    todoDeselectAll: 'Deselect all',
+    todoNotConnected: 'Not connected',
+    todoLoadingLists: 'Loading lists...',
+    todoListSaved: 'Shopping list saved!',
     tasksForWeek: 'Your tasks for the week',
     weeklyProgress: 'Weekly progress',
     times: 'times',

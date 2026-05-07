@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Settings, Edit, Check, X, Search, ExternalLink, Loader2, Globe } from 'lucide-react';
-import type { Task, Child, Meal, RecipeInspiration } from '../lib/api';
+import { Plus, Trash2, Settings, Edit, Check, X, Search, ExternalLink, Loader2, Globe, ShoppingCart, Link2, Unlink } from 'lucide-react';
+import type { Task, Child, Meal, RecipeInspiration, TodoStatus, TodoList } from '../lib/api';
 import { useLanguage } from '../lib/LanguageContext';
 
 const AVATAR_EMOJIS = [
@@ -49,6 +49,10 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   const [addedRecipes, setAddedRecipes] = useState<Set<string>>(new Set());
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const [todoStatus, setTodoStatus] = useState<TodoStatus | null>(null);
+  const [todoLists, setTodoLists] = useState<TodoList[]>([]);
+  const [todoListsLoading, setTodoListsLoading] = useState(false);
+  const [todoConnecting, setTodoConnecting] = useState(false);
 
   useEffect(() => {
     if (!emojiPickerOpen) return;
@@ -67,6 +71,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     loadChildren();
     loadCalendarSettings();
     loadMeals();
+    loadTodoStatus();
     api.getSettings().then(({ requirePinForHome, appFeatures }) => {
       setRequirePinForHome(requirePinForHome);
       setFeatures(appFeatures);
@@ -81,6 +86,62 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     } else {
       alert(t.saveFailed);
     }
+  }
+
+  async function loadTodoStatus() {
+    try { setTodoStatus(await api.getTodoStatus()); } catch { /* ignore */ }
+  }
+
+  async function connectTodo() {
+    setTodoConnecting(true);
+    try {
+      const { authUrl } = await api.getTodoAuthUrl();
+      const popup = window.open(authUrl, 'ms-oauth', 'width=520,height=680,noopener=0');
+      const onMessage = (e: MessageEvent) => {
+        if (e.data === 'todo-auth-success' || e.data === 'todo-auth-error') {
+          window.removeEventListener('message', onMessage);
+          clearInterval(pollClosed);
+          setTodoConnecting(false);
+          loadTodoStatus().then(() => {
+            if (e.data === 'todo-auth-success') loadTodoLists();
+          });
+        }
+      };
+      window.addEventListener('message', onMessage);
+      const pollClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(pollClosed);
+          window.removeEventListener('message', onMessage);
+          setTodoConnecting(false);
+          loadTodoStatus();
+        }
+      }, 600);
+    } catch (err) {
+      setTodoConnecting(false);
+      handleSaveError(err);
+    }
+  }
+
+  async function disconnectTodo() {
+    try {
+      await api.disconnectTodo();
+      setTodoStatus(s => s ? { ...s, connected: false, accountName: null, listId: null, listName: null } : null);
+      setTodoLists([]);
+    } catch (err) { handleSaveError(err); }
+  }
+
+  async function loadTodoLists() {
+    setTodoListsLoading(true);
+    try { setTodoLists(await api.getTodoLists()); } catch { /* ignore */ }
+    finally { setTodoListsLoading(false); }
+  }
+
+  async function selectTodoList(listId: string, listName: string) {
+    try {
+      await api.setTodoList(listId, listName);
+      setTodoStatus(s => s ? { ...s, listId, listName } : null);
+      alert(t.todoListSaved);
+    } catch (err) { handleSaveError(err); }
   }
 
   function toggleDarkMode() {
@@ -397,6 +458,81 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                   </div>
                   <Toggle value={requirePinForHome} onToggle={toggleRequirePinForHome} />
                 </div>
+              </div>
+
+              {/* Microsoft To-Do */}
+              <div className={`p-4 rounded-lg ${dm ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <ShoppingCart className={`w-5 h-5 flex-shrink-0 ${dm ? 'text-green-400' : 'text-green-600'}`} />
+                  <h3 className={`font-semibold ${labelText}`}>{t.todoSection}</h3>
+                </div>
+                <p className={`text-sm mb-4 ${mutedText}`}>{t.todoDesc}</p>
+
+                {todoStatus && !todoStatus.configured && (
+                  <p className={`text-sm p-3 rounded-lg ${dm ? 'bg-gray-600 text-yellow-300' : 'bg-yellow-50 text-yellow-800 border border-yellow-200'}`}>
+                    {t.todoNotConfigured}
+                  </p>
+                )}
+
+                {todoStatus?.configured && !todoStatus.connected && (
+                  <button
+                    onClick={connectTodo}
+                    disabled={todoConnecting}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    {todoConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                    {todoConnecting ? t.todoConnecting : t.todoConnect}
+                  </button>
+                )}
+
+                {todoStatus?.configured && todoStatus.connected && (
+                  <div className="space-y-3">
+                    <div className={`flex items-center justify-between p-3 rounded-lg ${dm ? 'bg-gray-600' : 'bg-white border border-gray-200'}`}>
+                      <div className="min-w-0">
+                        <p className={`text-sm font-medium ${bodyText}`}>{t.todoConnectedAs}</p>
+                        <p className={`text-sm truncate ${mutedText}`}>{todoStatus.accountName}</p>
+                      </div>
+                      <button
+                        onClick={disconnectTodo}
+                        className={`flex-shrink-0 flex items-center gap-1 ml-3 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                          dm ? 'bg-gray-500 hover:bg-gray-400 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        <Unlink className="w-3.5 h-3.5" />{t.todoDisconnect}
+                      </button>
+                    </div>
+
+                    <div>
+                      <p className={`text-sm font-medium mb-2 ${labelText}`}>{t.todoSelectList}</p>
+                      {todoLists.length === 0 ? (
+                        <button
+                          onClick={loadTodoLists}
+                          disabled={todoListsLoading}
+                          className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${dm ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700'}`}
+                        >
+                          {todoListsLoading ? t.todoLoadingLists : t.todoSelectList}
+                        </button>
+                      ) : (
+                        <div className="space-y-1">
+                          {todoLists.map(list => (
+                            <button
+                              key={list.id}
+                              onClick={() => selectTodoList(list.id, list.name)}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${
+                                todoStatus.listId === list.id
+                                  ? 'bg-green-600 text-white'
+                                  : dm ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-800'
+                              }`}
+                            >
+                              <span>{list.name}</span>
+                              {todoStatus.listId === list.id && <Check className="w-4 h-4 flex-shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

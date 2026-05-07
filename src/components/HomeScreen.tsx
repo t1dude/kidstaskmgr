@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
-import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus, Globe } from 'lucide-react';
-import type { Child, CalendarEvent, Task, TaskCompletion, Meal, Message } from '../lib/api';
+import { Settings, Users, Trophy, Calendar as CalendarIcon, Moon, Sun, MessageCircle, X, Utensils, Pencil, RefreshCw, ExternalLink, Bell, Plus, Globe, ShoppingCart, Loader2, Check } from 'lucide-react';
+import type { Child, CalendarEvent, Task, TaskCompletion, Meal, Message, TodoStatus } from '../lib/api';
 import { generateTips, type Tip, type TaskWithCompletion } from '../lib/tipsGenerator';
 import { useLanguage } from '../lib/LanguageContext';
 
@@ -30,6 +30,11 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const [features, setFeatures] = useState({ tasks: true, calendar: true, meals: true, messages: true });
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [todoStatus, setTodoStatus] = useState<TodoStatus | null>(null);
+  const [ingredientModal, setIngredientModal] = useState<{ meal: Meal; ingredients: string[]; title: string } | null>(null);
+  const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
+  const [ingredientLoading, setIngredientLoading] = useState<string | null>(null);
+  const [addingToList, setAddingToList] = useState(false);
 
   useEffect(() => {
     loadChildrenWithProgress();
@@ -40,6 +45,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     loadMeals();
     loadMealPlan();
     loadMessages();
+    api.getTodoStatus().then(setTodoStatus).catch(() => {});
     api.getSettings().then(({ appFeatures }) => setFeatures(f => ({ ...f, ...appFeatures }))).catch(() => {});
 
     const calendarInterval = setInterval(() => {
@@ -192,6 +198,35 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
       await api.deleteMessage(id);
       setMessages(prev => prev.filter(m => m.id !== id));
     } catch { /* ignore */ }
+  }
+
+  async function openIngredients(meal: Meal) {
+    if (!meal.recipe_url) return;
+    setIngredientLoading(meal.id);
+    try {
+      const data = await api.getRecipeIngredients(meal.recipe_url);
+      setIngredientModal({ meal, ingredients: data.ingredients, title: data.title || meal.name });
+      setSelectedIngredients(new Set(data.ingredients));
+    } catch {
+      alert(t.todoFetchFailed);
+    } finally {
+      setIngredientLoading(null);
+    }
+  }
+
+  async function addIngredientsToList() {
+    if (!ingredientModal) return;
+    setAddingToList(true);
+    try {
+      const items = ingredientModal.ingredients.filter(i => selectedIngredients.has(i));
+      const { added } = await api.addTodoItems(items);
+      setIngredientModal(null);
+      alert(t.todoAdded(added));
+    } catch {
+      alert(t.todoAddFailed);
+    } finally {
+      setAddingToList(false);
+    }
   }
 
   async function setMealForDay(date: string, mealId: string) {
@@ -532,6 +567,24 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                         ) : (
                           <span className="w-7 h-7 shrink-0" />
                         )}
+                        {selectedMeal?.recipe_url && todoStatus?.connected && todoStatus.listId ? (
+                          <button
+                            onClick={() => openIngredients(selectedMeal)}
+                            disabled={ingredientLoading === selectedMeal.id}
+                            title={t.todoAddToList}
+                            className={`flex items-center justify-center w-7 h-7 rounded-md active:scale-95 transition-colors ${
+                              darkMode
+                                ? 'text-green-400 bg-green-900/40 hover:bg-green-800/60'
+                                : 'text-green-600 bg-green-100 hover:bg-green-200'
+                            }`}
+                          >
+                            {ingredientLoading === selectedMeal.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <ShoppingCart className="w-4 h-4" />}
+                          </button>
+                        ) : (
+                          <span className="w-7 h-7 shrink-0" />
+                        )}
                       </div>
                     </div>
                   );
@@ -606,6 +659,79 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </div>}
         </div>}
       </div>
+
+      {ingredientModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-4 z-50"
+          onClick={() => setIngredientModal(null)}
+        >
+          <div
+            className={`rounded-2xl p-5 w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-1">
+              <div className="min-w-0 flex-1">
+                <h2 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{t.todoIngredients}</h2>
+                <p className={`text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {t.todoIngredientsDesc(todoStatus?.listName ?? '')}
+                </p>
+              </div>
+              <button onClick={() => setIngredientModal(null)} className={`flex-shrink-0 ml-2 p-1 rounded-full ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex gap-3 mb-3 mt-3">
+              <button
+                onClick={() => setSelectedIngredients(new Set(ingredientModal.ingredients))}
+                className={`text-sm px-3 py-1 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+              >{t.todoSelectAll}</button>
+              <button
+                onClick={() => setSelectedIngredients(new Set())}
+                className={`text-sm px-3 py-1 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+              >{t.todoDeselectAll}</button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 space-y-1 -mx-1 px-1">
+              {ingredientModal.ingredients.map((ing, i) => {
+                const checked = selectedIngredients.has(ing);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedIngredients(prev => {
+                      const next = new Set(prev);
+                      checked ? next.delete(ing) : next.add(ing);
+                      return next;
+                    })}
+                    className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${
+                      checked
+                        ? darkMode ? 'bg-green-900/40 border border-green-600/50' : 'bg-green-50 border border-green-300'
+                        : darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-50 border border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors ${
+                      checked ? 'bg-green-500 border-green-500' : darkMode ? 'border-gray-500' : 'border-gray-300'
+                    }`}>
+                      {checked && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className={`text-sm ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{ing}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={addIngredientsToList}
+              disabled={addingToList || selectedIngredients.size === 0}
+              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50"
+            >
+              {addingToList
+                ? <><Loader2 className="w-5 h-5 animate-spin" />{t.todoAdding}</>
+                : <><ShoppingCart className="w-5 h-5" />{t.todoAddToList} ({selectedIngredients.size})</>}
+            </button>
+          </div>
+        </div>
+      )}
 
       {selectedChildTips && (
         <div
