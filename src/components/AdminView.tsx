@@ -269,6 +269,19 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   const inactiveTab = dm ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
   const dividerColor = dm ? 'divide-gray-600' : 'divide-gray-100';
 
+  function CountStepper({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+    const btn = `w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold transition-colors active:scale-95 ${
+      dm ? 'bg-gray-600 hover:bg-gray-500 text-gray-100' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+    }`;
+    return (
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={() => onChange(Math.max(1, value - 1))} className={btn}>−</button>
+        <span className={`w-8 text-center font-semibold text-base select-none ${dm ? 'text-gray-100' : 'text-gray-800'}`}>{value}</span>
+        <button type="button" onClick={() => onChange(value + 1)} className={btn}>+</button>
+      </div>
+    );
+  }
+
   function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
     return (
       <button
@@ -402,13 +415,9 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                     className={`flex-1 ${inputClass}`}
                   />
                   <div className="flex gap-2">
-                    <input
-                      type="number"
-                      min="1"
+                    <CountStepper
                       value={newTask.target_count}
-                      onChange={(e) => setNewTask({ ...newTask, target_count: parseInt(e.target.value) || 1 })}
-                      className={`w-20 ${inputClass}`}
-                      title={t.timesPerWeekTitle}
+                      onChange={(n) => setNewTask({ ...newTask, target_count: n })}
                     />
                     <button onClick={addTask} className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
                       <Plus className="w-5 h-5" />{t.add}
@@ -424,13 +433,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                       <h4 className={`font-semibold ${bodyText}`}>{task.title}</h4>
                       {editingTaskId === task.id ? (
                         <div className="flex items-center gap-2 mt-2">
-                          <input
-                            type="number"
-                            min="1"
-                            value={editingTaskCount}
-                            onChange={(e) => setEditingTaskCount(parseInt(e.target.value) || 1)}
-                            className={`w-20 px-3 py-1 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${dm ? 'bg-gray-600 text-gray-100' : 'bg-white'}`}
-                          />
+                          <CountStepper value={editingTaskCount} onChange={setEditingTaskCount} />
                           <span className={`text-sm ${mutedText}`}>{t.timesPerWeek}</span>
                         </div>
                       ) : (
