@@ -212,7 +212,7 @@ async function getMsAccessToken(): Promise<string | null> {
   const expiry = parseInt(getSettingStr('ms_token_expiry') || '0');
   if (Date.now() + 5 * 60 * 1000 < expiry) return access;
   try {
-    const r = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    const r = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -709,7 +709,7 @@ app.get('/api/todo/auth-url', requireAuth, (req, res) => {
     response_mode: 'query', state,
     prompt: 'select_account',
   });
-  res.json({ authUrl: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}` });
+  res.json({ authUrl: `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?${params}` });
 });
 
 app.get('/api/todo/callback', async (req, res) => {
@@ -731,12 +731,13 @@ p{font-size:1.1rem;color:${success ? '#16a34a' : '#dc2626'}}</style></head>
   oauthStates.delete(state);
 
   try {
-    const tokenRes = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    const tokenRes = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: MS_CLIENT_ID!, client_secret: MS_CLIENT_SECRET!,
         code, grant_type: 'authorization_code', redirect_uri: MS_REDIRECT_URI,
+        scope: 'Tasks.ReadWrite User.Read offline_access',
       }),
     });
     if (!tokenRes.ok) return html('Kunne ikke hente token. Prøv igjen.', false);
