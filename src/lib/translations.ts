@@ -8,6 +8,38 @@ export interface TipMessages {
 }
 
 export interface Translations {
+  // Onboarding
+  onboardingStep: (current: number, total: number) => string;
+  onboardingWelcomeTitle: string;
+  onboardingWelcomeSubtitle: string;
+  onboardingWelcomeDesc: string;
+  onboardingGetStarted: string;
+  onboardingKidsTitle: string;
+  onboardingKidsDesc: string;
+  onboardingKidsMin: string;
+  onboardingAddChild: string;
+  onboardingAddAnotherChild: string;
+  onboardingTasksTitle: string;
+  onboardingTasksDesc: string;
+  onboardingTasksSuggested: string;
+  onboardingTasksAddCustom: string;
+  onboardingCalendarTitle: string;
+  onboardingCalendarDesc: string;
+  onboardingMealsTitle: string;
+  onboardingMealsDesc: string;
+  onboardingDoneTitle: string;
+  onboardingDoneDesc: string;
+  onboardingDonePinHint: string;
+  onboardingDoneSummaryKids: (n: number) => string;
+  onboardingDoneSummaryTasks: (n: number) => string;
+  onboardingDoneSummaryCalendar: string;
+  onboardingDoneSummaryMeals: (n: number) => string;
+  onboardingDoneFinish: string;
+  onboardingDoneSaving: string;
+  onboardingWrongPin: string;
+  onboardingNext: string;
+  onboardingSuggestedTasks: { title: string; target_count: number }[];
+
   appTitle: string;
   childStart: string;
   noChildrenTitle: string;
@@ -143,6 +175,43 @@ export interface Translations {
 
 export const translations: Record<Lang, Translations> = {
   no: {
+    onboardingStep: (current, total) => `Steg ${current} av ${total}`,
+    onboardingWelcomeTitle: 'Velkommen!',
+    onboardingWelcomeSubtitle: 'Din familieapp for ukeplan',
+    onboardingWelcomeDesc: 'La oss sette opp appen for familien din. Det tar bare noen minutter.',
+    onboardingGetStarted: 'Kom i gang',
+    onboardingKidsTitle: 'Legg til barn',
+    onboardingKidsDesc: 'Legg til alle barna i familien. Du kan alltid legge til flere senere.',
+    onboardingKidsMin: 'Legg til minst ett barn for å fortsette.',
+    onboardingAddChild: 'Legg til barn',
+    onboardingAddAnotherChild: 'Legg til et barn til',
+    onboardingTasksTitle: 'Sett opp oppgaver',
+    onboardingTasksDesc: 'Velg hvilke ukentlige oppgaver barna skal ha. Du kan tilpasse og legge til egne.',
+    onboardingTasksSuggested: 'Foreslåtte oppgaver',
+    onboardingTasksAddCustom: 'Legg til egen oppgave',
+    onboardingCalendarTitle: 'Kalender',
+    onboardingCalendarDesc: 'Koble til en kalender for å vise kommende hendelser på forsiden. Du kan hoppe over dette og legge det til i innstillingene etterpå.',
+    onboardingMealsTitle: 'Middagsplanlegging',
+    onboardingMealsDesc: 'Legg til middager du lager ofte. Du kan planlegge hvilken middag det er hver dag i uken – disse vises på forsiden. Du kan hoppe over dette og legge det til i innstillingene etterpå.',
+    onboardingDoneTitle: 'Alt klart!',
+    onboardingDoneDesc: 'Her er en oppsummering av hva du har satt opp. Skriv inn PIN-koden for å lagre og starte appen.',
+    onboardingDonePinHint: 'Standard PIN-kode er 1234. Du kan endre den under Innstillinger etterpå.',
+    onboardingDoneSummaryKids: (n) => `${n} barn lagt til`,
+    onboardingDoneSummaryTasks: (n) => `${n} oppgaver lagt til`,
+    onboardingDoneSummaryCalendar: 'Kalender koblet til',
+    onboardingDoneSummaryMeals: (n) => `${n} middager lagt til`,
+    onboardingDoneFinish: 'Lagre og start appen',
+    onboardingDoneSaving: 'Lagrer...',
+    onboardingWrongPin: 'Feil PIN-kode. Prøv igjen.',
+    onboardingNext: 'Neste',
+    onboardingSuggestedTasks: [
+      { title: 'Rydd sengen', target_count: 7 },
+      { title: 'Pusse tenner', target_count: 14 },
+      { title: 'Lekser', target_count: 5 },
+      { title: 'Rydd rommet', target_count: 2 },
+      { title: 'Trening', target_count: 3 },
+    ],
+
     appTitle: 'Ukeplan for familien',
     childStart: 'Trykk for å starte',
     noChildrenTitle: 'Ingen barn registrert ennå',
@@ -297,6 +366,43 @@ export const translations: Record<Lang, Translations> = {
     },
   },
   en: {
+    onboardingStep: (current, total) => `Step ${current} of ${total}`,
+    onboardingWelcomeTitle: 'Welcome!',
+    onboardingWelcomeSubtitle: 'Your family weekly planner',
+    onboardingWelcomeDesc: "Let's set up the app for your family. It only takes a few minutes.",
+    onboardingGetStarted: 'Get started',
+    onboardingKidsTitle: 'Add children',
+    onboardingKidsDesc: 'Add all the children in your family. You can always add more later.',
+    onboardingKidsMin: 'Add at least one child to continue.',
+    onboardingAddChild: 'Add child',
+    onboardingAddAnotherChild: 'Add another child',
+    onboardingTasksTitle: 'Set up tasks',
+    onboardingTasksDesc: 'Choose which weekly tasks the children should have. You can customize and add your own.',
+    onboardingTasksSuggested: 'Suggested tasks',
+    onboardingTasksAddCustom: 'Add custom task',
+    onboardingCalendarTitle: 'Calendar',
+    onboardingCalendarDesc: 'Connect a calendar to show upcoming events on the home screen. You can skip this and add it later in settings.',
+    onboardingMealsTitle: 'Meal planning',
+    onboardingMealsDesc: 'Add dinners you make often. You can plan which dinner each day of the week — these are shown on the home screen. You can skip this and add it later in settings.',
+    onboardingDoneTitle: "You're all set!",
+    onboardingDoneDesc: "Here's a summary of what you've set up. Enter your PIN code to save and launch the app.",
+    onboardingDonePinHint: 'The default PIN is 1234. You can change it under Settings afterwards.',
+    onboardingDoneSummaryKids: (n) => `${n} ${n === 1 ? 'child' : 'children'} added`,
+    onboardingDoneSummaryTasks: (n) => `${n} ${n === 1 ? 'task' : 'tasks'} added`,
+    onboardingDoneSummaryCalendar: 'Calendar connected',
+    onboardingDoneSummaryMeals: (n) => `${n} ${n === 1 ? 'meal' : 'meals'} added`,
+    onboardingDoneFinish: 'Save and launch',
+    onboardingDoneSaving: 'Saving...',
+    onboardingWrongPin: 'Wrong PIN. Please try again.',
+    onboardingNext: 'Next',
+    onboardingSuggestedTasks: [
+      { title: 'Make bed', target_count: 7 },
+      { title: 'Brush teeth', target_count: 14 },
+      { title: 'Homework', target_count: 5 },
+      { title: 'Tidy room', target_count: 2 },
+      { title: 'Exercise', target_count: 3 },
+    ],
+
     appTitle: 'Family Weekly Planner',
     childStart: 'Tap to start',
     noChildrenTitle: 'No children registered yet',

@@ -4,6 +4,7 @@ import { ChildView } from './components/ChildView';
 import { AdminView } from './components/AdminView';
 import { PinModal } from './components/PinModal';
 import { PWAPrompt } from './components/PWAPrompt';
+import { OnboardingFlow } from './components/OnboardingFlow';
 import { api } from './lib/api';
 import type { Child } from './lib/api';
 
@@ -18,18 +19,21 @@ function App() {
   const [pendingTab, setPendingTab] = useState<AdminTab>('settings');
   const [homeUnlocked, setHomeUnlocked] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     Promise.all([
       api.getSettings(),
+      api.getChildren(),
       token ? api.validateToken() : Promise.resolve(false),
     ])
-      .then(([{ requirePinForHome }, tokenValid]) => {
+      .then(([{ requirePinForHome }, children, tokenValid]) => {
         if (token && !tokenValid) localStorage.removeItem('adminToken');
         setHomeUnlocked(!requirePinForHome || tokenValid);
+        setNeedsOnboarding(children.length === 0);
       })
-      .catch(() => setHomeUnlocked(true))
+      .catch(() => { setHomeUnlocked(true); setNeedsOnboarding(false); })
       .finally(() => setSettingsLoaded(true));
 
     const tokenCheckInterval = setInterval(async () => {
@@ -80,7 +84,16 @@ function App() {
     }
   }
 
+  function handleOnboardingComplete() {
+    setNeedsOnboarding(false);
+    setHomeUnlocked(true);
+  }
+
   if (!settingsLoaded) return null;
+
+  if (needsOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
 
   if (!homeUnlocked) {
     return (
