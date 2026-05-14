@@ -31,6 +31,21 @@ function App() {
       })
       .catch(() => setHomeUnlocked(true))
       .finally(() => setSettingsLoaded(true));
+
+    const tokenCheckInterval = setInterval(async () => {
+      try {
+        const [{ requirePinForHome }, tokenValid] = await Promise.all([
+          api.getSettings(),
+          localStorage.getItem('adminToken') ? api.validateToken() : Promise.resolve(false),
+        ]);
+        if (!tokenValid) localStorage.removeItem('adminToken');
+        setHomeUnlocked(!requirePinForHome || tokenValid);
+      } catch {
+        // keep current state on network error
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(tokenCheckInterval);
   }, []);
 
   function handleSelectChild(child: Child) {

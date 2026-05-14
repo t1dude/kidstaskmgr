@@ -48,11 +48,16 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     api.getTodoStatus().then(setTodoStatus).catch(() => {});
     api.getSettings().then(({ appFeatures }) => setFeatures(f => ({ ...f, ...appFeatures }))).catch(() => {});
 
-    const calendarInterval = setInterval(() => {
+    const refreshInterval = setInterval(() => {
+      loadChildrenWithProgress();
       loadCalendarEvents();
+      loadMeals();
+      loadMealPlan();
+      loadMessages();
+      api.getTodoStatus().then(setTodoStatus).catch(() => {});
     }, 5 * 60 * 1000);
 
-    return () => clearInterval(calendarInterval);
+    return () => clearInterval(refreshInterval);
   }, []);
 
   useEffect(() => {
