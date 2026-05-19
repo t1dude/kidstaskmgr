@@ -117,11 +117,11 @@ export const api = {
     return response.ok;
   },
 
-  async login(pin: string): Promise<{ token: string }> {
+  async login(pin: string, rememberMe?: boolean): Promise<{ token: string }> {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin }),
+      body: JSON.stringify({ pin, rememberMe: !!rememberMe }),
     });
     if (!response.ok) {
       const data = await response.json();

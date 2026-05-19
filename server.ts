@@ -315,7 +315,9 @@ app.post('/api/auth/login', (req, res) => {
 
   loginAttempts.delete(ip);
   const token = randomBytes(32).toString('hex');
-  sessions.set(token, new Date(now + 8 * 60 * 60 * 1000));
+  const { rememberMe } = req.body;
+  const ttl = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000;
+  sessions.set(token, new Date(now + ttl));
   res.json({ token });
 });
 

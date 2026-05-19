@@ -17,6 +17,7 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
     if (retryAfter <= 0) return;
@@ -39,7 +40,7 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
     setLoading(true);
     setError('');
     try {
-      const { token } = await api.login(pin);
+      const { token } = await api.login(pin, rememberMe);
       onSuccess(token);
     } catch (err: any) {
       setError(err?.message || 'Kunne ikke koble til serveren');
@@ -79,6 +80,15 @@ export function PinModal({ onSuccess, onCancel, canCancel = true }: PinModalProp
               {error}{isLocked ? ` (${retryAfter}s)` : ''}
             </p>
           )}
+          <label className={`flex items-center gap-2 cursor-pointer select-none text-sm ${dm ? 'text-gray-300' : 'text-gray-600'}`}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded accent-blue-500"
+            />
+            {t.rememberMe}
+          </label>
           <button
             type="submit"
             disabled={loading || !pin.trim() || isLocked}

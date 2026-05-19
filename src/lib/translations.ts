@@ -130,6 +130,7 @@ export interface Translations {
   signingIn: string;
   waitSeconds: (n: number) => string;
   signIn: string;
+  rememberMe: string;
   pwaInstallTitle: string;
   pwaInstallAndroid: string;
   pwaInstallAndroidManual1: string;
@@ -265,6 +266,7 @@ export const translations: Record<Lang, Translations> = {
     signingIn: 'Logger inn...',
     waitSeconds: (n) => `Venter (${n}s)`,
     signIn: 'Logg inn',
+    rememberMe: 'Husk meg i 30 dager',
     pwaInstallTitle: 'Legg til på hjemskjermen',
     pwaInstallAndroid: 'Installer appen for raskere tilgang – fungerer som en vanlig app.',
     pwaInstallAndroidManual1: 'Trykk på',
@@ -419,6 +421,7 @@ export const translations: Record<Lang, Translations> = {
     signingIn: 'Signing in...',
     waitSeconds: (n) => `Wait (${n}s)`,
     signIn: 'Sign in',
+    rememberMe: 'Remember me for 30 days',
     pwaInstallTitle: 'Add to Home Screen',
     pwaInstallAndroid: 'Install the app for faster access – works like a native app.',
     pwaInstallAndroidManual1: 'Tap the',
