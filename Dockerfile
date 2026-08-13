@@ -24,7 +24,8 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY server.ts ./
 
-RUN chown -R nodejs:nodejs /app
+RUN ln -s /app/node_modules/.bin/tsx /usr/local/bin/tsx && \
+    chown -R nodejs:nodejs /app
 
 USER nodejs
 
@@ -38,4 +39,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["node_modules/.bin/tsx", "server.ts"]
+CMD ["tsx", "server.ts"]
