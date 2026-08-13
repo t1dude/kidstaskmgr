@@ -3,8 +3,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production && \
-    npm install -D vite @vitejs/plugin-react typescript
+RUN npm ci
 
 COPY . .
 
@@ -19,12 +18,13 @@ RUN addgroup -g 1001 -S nodejs && \
     mkdir -p /app/data && \
     chown -R nodejs:nodejs /app
 
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/server.ts ./
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-RUN npm install -g tsx
+COPY --from=builder /app/dist ./dist
+COPY server.ts ./
+
+RUN chown -R nodejs:nodejs /app
 
 USER nodejs
 
@@ -37,4 +37,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["tsx", "server.ts"]
+CMD ["npx", "tsx", "server.ts"]
