@@ -7,7 +7,9 @@ services:
       - NODE_ENV=production
       - DB_PATH=/app/data/tasks.db
       - PORT=3001
-      - ADMIN_PIN=1234
+      # No ADMIN_PIN set – the app will prompt you to create one on first launch.
+      # Optionally set ADMIN_PIN here to pin it via environment/deployment config instead.
+      #- ADMIN_PIN=your-pin-here
       # Microsoft To-Do integration (optional)
       # Register a free app at https://portal.azure.com → Entra ID → App registrations
       # Account type: Personal Microsoft accounts only | Platform: Web | Redirect URI: {APP_URL}/api/todo/callback

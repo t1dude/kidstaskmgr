@@ -132,6 +132,24 @@ export const api = {
     return response.json();
   },
 
+  async getPinStatus(): Promise<{ configured: boolean }> {
+    const response = await fetch(`${API_URL}/auth/pin-status`);
+    return response.json();
+  },
+
+  async setupPin(pin: string): Promise<{ token: string }> {
+    const response = await fetch(`${API_URL}/auth/setup-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Kunne ikke sette opp PIN');
+    }
+    return response.json();
+  },
+
   async getChildren(): Promise<Child[]> {
     const response = await fetch(`${API_URL}/children`);
     return response.json();

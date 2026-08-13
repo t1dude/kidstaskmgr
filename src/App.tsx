@@ -18,18 +18,24 @@ function App() {
   const [pendingTab, setPendingTab] = useState<AdminTab>('settings');
   const [homeUnlocked, setHomeUnlocked] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [pinConfigured, setPinConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     Promise.all([
       api.getSettings(),
+      api.getPinStatus(),
       token ? api.validateToken() : Promise.resolve(false),
     ])
-      .then(([{ requirePinForHome }, tokenValid]) => {
+      .then(([{ requirePinForHome }, { configured }, tokenValid]) => {
         if (token && !tokenValid) localStorage.removeItem('adminToken');
+        setPinConfigured(configured);
         setHomeUnlocked(!requirePinForHome || tokenValid);
       })
-      .catch(() => setHomeUnlocked(true))
+      .catch(() => {
+        setPinConfigured(true);
+        setHomeUnlocked(true);
+      })
       .finally(() => setSettingsLoaded(true));
 
     const tokenCheckInterval = setInterval(async () => {
@@ -81,6 +87,21 @@ function App() {
   }
 
   if (!settingsLoaded) return null;
+
+  if (pinConfigured === false) {
+    return (
+      <PinModal
+        mode="setup"
+        onSuccess={(token) => {
+          localStorage.setItem('adminToken', token);
+          setPinConfigured(true);
+          setHomeUnlocked(true);
+        }}
+        onCancel={() => {}}
+        canCancel={false}
+      />
+    );
+  }
 
   if (!homeUnlocked) {
     return (

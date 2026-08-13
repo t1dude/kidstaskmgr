@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import ical from 'node-ical';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { randomBytes, randomUUID, timingSafeEqual } from 'crypto';
+import { randomBytes, randomUUID, timingSafeEqual, scryptSync } from 'crypto';
 import { lookup as dnsLookup } from 'dns/promises';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,10 +20,9 @@ const APP_URL = (process.env.APP_URL || `http://localhost:${process.env.PORT || 
 const MS_REDIRECT_URI = `${APP_URL}/api/todo/callback`;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
-if (!process.env.ADMIN_PIN) {
-  console.warn('⚠️  ADVARSEL: ADMIN_PIN er ikke satt – standard PIN "1234" brukes. Sett ADMIN_PIN i miljøvariablene!');
-}
+// ADMIN_PIN is an optional legacy override; the primary path is the DB-backed
+// PIN set up on first run via /api/auth/setup-pin (see isPinConfigured/verifyPin below).
+const ENV_ADMIN_PIN = process.env.ADMIN_PIN?.trim() || null;
 const sessions = new Map<string, Date>(); // token → expiry
 const oauthStates = new Map<string, number>(); // state → expiry ms
 
@@ -199,6 +198,36 @@ function setSetting(key: string, value: string | null) {
   }
 }
 
+// ── Admin PIN (DB-backed, set up on first run) ─────────────────────────────────
+function hashPin(pin: string, salt: string): string {
+  return scryptSync(pin, salt, 64).toString('hex');
+}
+
+function getStoredPinHash(): { salt: string; hash: string } | null {
+  const row = db.prepare('SELECT value FROM app_settings WHERE key = ?').get('admin_pin_hash') as { value: string } | undefined;
+  if (!row) return null;
+  try {
+    const parsed = JSON.parse(row.value);
+    if (parsed?.salt && parsed?.hash) return parsed;
+  } catch { /* ignore */ }
+  return null;
+}
+
+function isPinConfigured(): boolean {
+  return !!getStoredPinHash() || !!ENV_ADMIN_PIN;
+}
+
+function verifyPin(input: string): boolean {
+  const stored = getStoredPinHash();
+  if (stored) {
+    const candidate = Buffer.from(hashPin(input, stored.salt), 'hex');
+    const expected = Buffer.from(stored.hash, 'hex');
+    return candidate.length === expected.length && timingSafeEqual(candidate, expected);
+  }
+  if (ENV_ADMIN_PIN) return checkPin(input, ENV_ADMIN_PIN);
+  return false;
+}
+
 // ── Microsoft To-Do helpers ───────────────────────────────────────────────────
 function clearMsTokens() {
   ['ms_access_token', 'ms_refresh_token', 'ms_token_expiry', 'ms_account_name', 'ms_list_id', 'ms_list_name']
@@ -294,7 +323,28 @@ app.put('/api/settings', requireAuth, (req, res) => {
 });
 
 // ── Auth endpoints ────────────────────────────────────────────────────────────
+app.get('/api/auth/pin-status', (req, res) => {
+  res.json({ configured: isPinConfigured() });
+});
+
+app.post('/api/auth/setup-pin', (req, res) => {
+  if (isPinConfigured()) return res.status(409).json({ error: 'PIN er allerede satt opp' });
+  const { pin } = req.body;
+  if (typeof pin !== 'string' || !/^\d{4,10}$/.test(pin)) {
+    return res.status(400).json({ error: 'PIN må være 4–10 sifre' });
+  }
+  const salt = randomBytes(16).toString('hex');
+  const hash = hashPin(pin, salt);
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)')
+    .run('admin_pin_hash', JSON.stringify({ salt, hash }));
+  const token = randomBytes(32).toString('hex');
+  sessions.set(token, new Date(Date.now() + 8 * 60 * 60 * 1000));
+  res.json({ token });
+});
+
 app.post('/api/auth/login', (req, res) => {
+  if (!isPinConfigured()) return res.status(409).json({ error: 'Ingen PIN er satt opp ennå' });
+
   const ip = (req.ip ?? req.socket.remoteAddress ?? 'unknown').replace(/^::ffff:/, '');
   const now = Date.now();
   const attempt = loginAttempts.get(ip) ?? { count: 0, lockedUntil: 0 };
@@ -305,7 +355,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   const { pin } = req.body;
-  if (!pin || !checkPin(String(pin), ADMIN_PIN)) {
+  if (!pin || !verifyPin(String(pin))) {
     attempt.count += 1;
     attempt.lockedUntil = now + getLockoutDuration(attempt.count);
     loginAttempts.set(ip, attempt);

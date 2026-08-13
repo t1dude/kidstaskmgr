@@ -131,6 +131,13 @@ export interface Translations {
   waitSeconds: (n: number) => string;
   signIn: string;
   rememberMe: string;
+  pinSetupTitle: string;
+  pinSetupDesc: string;
+  pinConfirmPlaceholder: string;
+  pinSetupSubmit: string;
+  pinSettingUp: string;
+  pinMismatch: string;
+  pinInvalidFormat: string;
   pwaInstallTitle: string;
   pwaInstallAndroid: string;
   pwaInstallAndroidManual1: string;
@@ -267,6 +274,13 @@ export const translations: Record<Lang, Translations> = {
     waitSeconds: (n) => `Venter (${n}s)`,
     signIn: 'Logg inn',
     rememberMe: 'Husk meg i 30 dager',
+    pinSetupTitle: 'Sett opp admin-PIN',
+    pinSetupDesc: 'Ingen PIN er satt opp ennå. Velg en PIN-kode (4–10 sifre) for å beskytte innstillingene.',
+    pinConfirmPlaceholder: 'Gjenta PIN-kode',
+    pinSetupSubmit: 'Sett PIN',
+    pinSettingUp: 'Setter opp...',
+    pinMismatch: 'PIN-kodene er ikke like',
+    pinInvalidFormat: 'PIN må være 4–10 sifre',
     pwaInstallTitle: 'Legg til på hjemskjermen',
     pwaInstallAndroid: 'Installer appen for raskere tilgang – fungerer som en vanlig app.',
     pwaInstallAndroidManual1: 'Trykk på',
@@ -422,6 +436,13 @@ export const translations: Record<Lang, Translations> = {
     waitSeconds: (n) => `Wait (${n}s)`,
     signIn: 'Sign in',
     rememberMe: 'Remember me for 30 days',
+    pinSetupTitle: 'Set up admin PIN',
+    pinSetupDesc: 'No PIN has been set up yet. Choose a PIN code (4-10 digits) to protect the settings.',
+    pinConfirmPlaceholder: 'Repeat PIN code',
+    pinSetupSubmit: 'Set PIN',
+    pinSettingUp: 'Setting up...',
+    pinMismatch: 'PIN codes do not match',
+    pinInvalidFormat: 'PIN must be 4-10 digits',
     pwaInstallTitle: 'Add to Home Screen',
     pwaInstallAndroid: 'Install the app for faster access – works like a native app.',
     pwaInstallAndroidManual1: 'Tap the',

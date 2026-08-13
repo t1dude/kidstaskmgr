@@ -58,9 +58,9 @@ docker-compose down -v && docker-compose up -d --build
 ## First-time setup
 
 1. Open `http://localhost:3001`
-2. Click the gear icon → enter the default PIN (`1234`) → go to **Children** and add your children
-3. Go to **Tasks** and add weekly tasks
-4. Change the PIN under Settings → Security (strongly recommended)
+2. You'll be prompted to create an admin PIN on first launch — choose one (4-10 digits)
+3. Click the gear icon → go to **Children** and add your children
+4. Go to **Tasks** and add weekly tasks
 
 ## Weekly reset
 

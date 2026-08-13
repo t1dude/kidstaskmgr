@@ -58,9 +58,9 @@ docker-compose down -v && docker-compose up -d --build
 ## Førstegangsoppsett
 
 1. Åpne `http://localhost:3001`
-2. Klikk tannhjulikonet → skriv inn standard PIN (`1234`) → gå til **Barn** og legg til barna dine
-3. Gå til **Oppgaver** og legg til ukentlige oppgaver
-4. Endre PIN under Innstillinger → Sikkerhet (anbefales på det sterkeste)
+2. Du blir bedt om å opprette en admin-PIN ved første oppstart – velg en (4–10 sifre)
+3. Klikk tannhjulikonet → gå til **Barn** og legg til barna dine
+4. Gå til **Oppgaver** og legg til ukentlige oppgaver
 
 ## Ukentlig nullstilling
 
