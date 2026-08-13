@@ -44,7 +44,9 @@ npm run dev          # Vite frontend på port 5173 (proxyer /api automatisk)
 
 ## Sikkerhet
 
-Appen har innebygd PIN-beskyttelse. **Endre PIN før du publiserer på internett:**
+Appen krever en admin-PIN. Første gang du åpner den blir du bedt om å opprette en (4–10 sifre) – hele appen, inkludert oppgavelisten for barna, er sperret bak dette oppsettsskjermbildet til en PIN er valgt. Den lagres som en saltet hash i databasen, ikke i en konfigurasjonsfil.
+
+For automatiserte eller ubetjente installasjoner kan du sette den på forhånd via miljøvariabel i stedet, som hopper over oppsettsskjermbildet:
 
 ```yaml
 # docker-compose.yml
@@ -56,7 +58,7 @@ Admin-panelet krever alltid PIN. For å beskytte hele appen (anbefalt ved intern
 
 > Innstillinger → Generelt → Sikkerhet → «Krev PIN for startsiden»
 
-Sesjonstokenet varer i 8 timer og lagres i `localStorage`.
+Sesjonstokenet varer i 8 timer som standard, eller 30 dager hvis «Husk meg» er krysset av ved innlogging – lagres i `localStorage`.
 
 Feilede innloggingsforsøk gir progressive sperringer: 3 feil → 1 min, 6 → 5 min, 10 → 30 min, 15 → 2 timer.
 

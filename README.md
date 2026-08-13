@@ -44,7 +44,9 @@ npm run dev          # Vite frontend on port 5173 (proxies /api automatically)
 
 ## Security
 
-The app has built-in PIN protection. **Change the PIN before exposing it to the internet:**
+The app requires an admin PIN. The first time you open it, you'll be prompted to create one (4-10 digits) — the whole app, including the child task list, is locked behind this setup screen until a PIN is chosen. It's stored as a salted hash in the database, not in a config file.
+
+For automated or headless deployments, you can pre-set it via environment variable instead, which skips the setup screen:
 
 ```yaml
 # docker-compose.yml
@@ -56,7 +58,7 @@ The admin panel always requires a PIN. To protect the entire app (recommended wh
 
 > Settings → General → Security → "Require PIN for home screen"
 
-The session token lasts 8 hours and is stored in `localStorage`.
+Session tokens last 8 hours by default, or 30 days if "Remember me" is checked at login — stored in `localStorage`.
 
 Failed login attempts trigger progressive lockouts: 3 failures → 1 min, 6 → 5 min, 10 → 30 min, 15 → 2 hours.
 
