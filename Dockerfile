@@ -28,6 +28,7 @@ RUN chown -R nodejs:nodejs /app
 
 USER nodejs
 
+ENV HOME=/app
 ENV NODE_ENV=production
 ENV DB_PATH=/app/data/tasks.db
 ENV PORT=3001
@@ -37,4 +38,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["npx", "tsx", "server.ts"]
+CMD ["node_modules/.bin/tsx", "server.ts"]
