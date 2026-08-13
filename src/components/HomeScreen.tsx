@@ -317,73 +317,71 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
           </h1>
         </div>
 
-        {features.tasks && <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {features.tasks && <div className="space-y-3 mb-8">
           {children.map((child) => (
-            <div key={child.id} className="relative">
+            <div
+              key={child.id}
+              className={`flex items-center gap-3 md:gap-4 rounded-2xl p-3 md:p-4 shadow-xl hover:shadow-2xl transition-shadow duration-300 ${
+                darkMode ? 'bg-gray-800' : 'bg-white'
+              }`}
+              style={{ borderWidth: 3, borderColor: child.color }}
+            >
               <button
                 onClick={() => onSelectChild(child)}
-                className={`group relative rounded-3xl p-5 md:p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95 w-full ${
-                  darkMode ? 'bg-gray-800' : 'bg-white'
-                }`}
-                style={{
-                  borderWidth: 4,
-                  borderColor: child.color,
-                }}
+                className="group flex items-center gap-3 md:gap-4 flex-1 min-w-0 text-left"
               >
-                <div className="flex flex-col items-center gap-4">
-                  <div
-                    className="w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-5xl md:text-7xl shadow-xl transition-transform group-hover:scale-110 relative"
-                    style={{
-                      backgroundColor: child.color + '20',
-                      borderWidth: 4,
-                      borderColor: child.color,
-                    }}
-                  >
-                    {child.avatar_emoji}
-                    <div className="absolute bottom-0 right-0 bg-yellow-400 rounded-full px-2 py-1 text-sm font-bold text-gray-800 shadow-lg flex items-center gap-1">
-                      <Trophy className="w-4 h-4" />
-                      {child.progress}%
-                    </div>
-                  </div>
-                  <h2 className={`text-2xl md:text-3xl font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                <div
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-2xl md:text-3xl shadow-lg flex-shrink-0 transition-transform group-hover:scale-110"
+                  style={{
+                    backgroundColor: child.color + '20',
+                    borderWidth: 3,
+                    borderColor: child.color,
+                  }}
+                >
+                  {child.avatar_emoji}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className={`text-lg md:text-xl font-bold truncate ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                     {child.name}
                   </h2>
-                  <div className="w-full px-4">
-                    <div className={`rounded-full h-4 overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${child.progress}%`,
-                          backgroundColor: child.color,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div
-                    className="px-6 py-2 rounded-full text-white font-semibold"
-                    style={{ backgroundColor: child.color }}
-                  >
-                    {t.childStart}
+                  <div className={`rounded-full h-3 overflow-hidden mt-1.5 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${child.progress}%`,
+                        backgroundColor: child.color,
+                      }}
+                    ></div>
                   </div>
                 </div>
+                <div className="flex items-center gap-1 flex-shrink-0 font-bold text-base md:text-lg" style={{ color: child.color }}>
+                  <Trophy className="w-4 h-4 md:w-5 md:h-5" />
+                  {child.progress}%
+                </div>
               </button>
+
               {child.tips.length > 0 && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedChildTips({ child, tips: child.tips });
-                  }}
-                  className={`absolute top-4 right-4 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+                  onClick={() => setSelectedChildTips({ child, tips: child.tips })}
+                  className={`relative flex-shrink-0 rounded-full p-2 md:p-2.5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 ${
                     darkMode ? 'bg-blue-600' : 'bg-blue-500'
                   }`}
                   title={t.viewTips}
                 >
-                  <MessageCircle className="w-6 h-6 text-white" />
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
                     {child.tips.length}
                   </div>
                 </button>
               )}
+
+              <button
+                onClick={() => onSelectChild(child)}
+                className="hidden sm:block flex-shrink-0 px-4 md:px-6 py-2 rounded-full text-white font-semibold text-sm md:text-base active:scale-95 transition-transform"
+                style={{ backgroundColor: child.color }}
+              >
+                {t.childStart}
+              </button>
             </div>
           ))}
         </div>}
