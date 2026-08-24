@@ -21,6 +21,7 @@ export function ChildView({ child, onBack }: ChildViewProps) {
   const [tasks, setTasks] = useState<TaskWithCompletion[]>([]);
   const [totalProgress, setTotalProgress] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [weekStart, setWeekStart] = useState<string | null>(null);
 
   useEffect(() => {
     loadTasks();
@@ -28,8 +29,10 @@ export function ChildView({ child, onBack }: ChildViewProps) {
 
   async function loadTasks() {
     try {
+      const currentWeekStart = await api.getCurrentWeekStart();
+      setWeekStart(currentWeekStart);
       const tasksData = await api.getTasks();
-      const completionsData = await api.getTaskCompletions(child.id, getWeekStart());
+      const completionsData = await api.getTaskCompletions(child.id, currentWeekStart);
 
       const completionsMap = new Map<string, number>();
       completionsData.forEach((c) => {
@@ -48,14 +51,6 @@ export function ChildView({ child, onBack }: ChildViewProps) {
     }
   }
 
-  function getWeekStart() {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(today.setDate(diff));
-    return monday.toISOString().split('T')[0];
-  }
-
   function calculateProgress(tasksData: TaskWithCompletion[]) {
     if (tasksData.length === 0) { setTotalProgress(0); return; }
     const totalTarget = tasksData.reduce((sum, task) => sum + task.target_count, 0);
@@ -65,9 +60,9 @@ export function ChildView({ child, onBack }: ChildViewProps) {
 
   async function incrementTask(task: TaskWithCompletion) {
     try {
-      const weekStart = getWeekStart();
+      const currentWeekStart = weekStart ?? (await api.getCurrentWeekStart());
       const newCount = task.completion_count + 1;
-      await api.upsertTaskCompletion({ child_id: child.id, task_id: task.id, completion_count: newCount, week_start_date: weekStart });
+      await api.upsertTaskCompletion({ child_id: child.id, task_id: task.id, completion_count: newCount, week_start_date: currentWeekStart });
       if (newCount === task.target_count) {
         setShowCelebration(true);
         setTimeout(() => setShowCelebration(false), 2000);
@@ -81,14 +76,14 @@ export function ChildView({ child, onBack }: ChildViewProps) {
   async function decrementTask(task: TaskWithCompletion) {
     if (task.completion_count === 0) return;
     try {
-      const weekStart = getWeekStart();
+      const currentWeekStart = weekStart ?? (await api.getCurrentWeekStart());
       const newCount = task.completion_count - 1;
       if (newCount === 0) {
-        const completionsData = await api.getTaskCompletions(child.id, weekStart);
-        const existing = completionsData.find((c) => c.task_id === task.id && c.week_start_date === weekStart);
+        const completionsData = await api.getTaskCompletions(child.id, currentWeekStart);
+        const existing = completionsData.find((c) => c.task_id === task.id && c.week_start_date === currentWeekStart);
         if (existing) await api.deleteTaskCompletion(existing.id);
       } else {
-        await api.upsertTaskCompletion({ child_id: child.id, task_id: task.id, completion_count: newCount, week_start_date: weekStart });
+        await api.upsertTaskCompletion({ child_id: child.id, task_id: task.id, completion_count: newCount, week_start_date: currentWeekStart });
       }
       loadTasks();
     } catch (error) {

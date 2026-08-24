@@ -200,6 +200,12 @@ export const api = {
     if (!response.ok) throw new Error(`${response.status}`);
   },
 
+  async getCurrentWeekStart(): Promise<string> {
+    const response = await fetch(`${API_URL}/current-week`);
+    const data = await response.json();
+    return data.week_start_date;
+  },
+
   async getTaskCompletions(childId: string, weekStart: string): Promise<TaskCompletion[]> {
     const response = await fetch(`${API_URL}/task-completions/${childId}/${weekStart}`);
     return response.json();

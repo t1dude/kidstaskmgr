@@ -198,6 +198,27 @@ function setSetting(key: string, value: string | null) {
   }
 }
 
+// The "current week" is deliberately NOT derived from today's date on every
+// request — that would silently roll progress over to a blank week as soon as
+// the calendar hits Monday, before anyone got to see the finished week's
+// results. Instead it's a stored value that only advances when an admin
+// explicitly resets the week (see /api/reset-week).
+function computeMondayISO(date: Date): string {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().split('T')[0];
+}
+
+function getCurrentWeekStart(): string {
+  const existing = getSettingStr('current_week_start');
+  if (existing) return existing;
+  const monday = computeMondayISO(new Date());
+  setSetting('current_week_start', monday);
+  return monday;
+}
+
 // ── Admin PIN (DB-backed, set up on first run) ─────────────────────────────────
 function hashPin(pin: string, salt: string): string {
   return scryptSync(pin, salt, 64).toString('hex');
@@ -454,6 +475,13 @@ app.delete('/api/tasks/:id', requireAuth, (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to delete task' }); }
 });
 
+// ── Current week (public – drives which week children/parents see) ────────────
+app.get('/api/current-week', (req, res) => {
+  try {
+    res.json({ week_start_date: getCurrentWeekStart() });
+  } catch { res.status(500).json({ error: 'Failed to fetch current week' }); }
+});
+
 // ── Task completions (public – used by children) ──────────────────────────────
 app.get('/api/task-completions/:childId/:weekStart', (req, res) => {
   try {
@@ -495,6 +523,7 @@ app.delete('/api/reset-week', requireAuth, (req, res) => {
   try {
     db.prepare('DELETE FROM task_completions').run();
     db.prepare('DELETE FROM meal_plan').run();
+    setSetting('current_week_start', computeMondayISO(new Date()));
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed to reset week' }); }
 });

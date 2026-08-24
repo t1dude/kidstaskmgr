@@ -80,7 +80,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     try {
       const childrenData = await api.getChildren();
       const tasksData = await api.getTasks();
-      const weekStart = getWeekStart();
+      const weekStart = await api.getCurrentWeekStart();
 
       const childrenWithProgress = await Promise.all(
         childrenData.map(async (child) => {
