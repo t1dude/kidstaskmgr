@@ -31,6 +31,7 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
   });
   const [features, setFeatures] = useState<AppFeatures>({ tasks: true, calendar: true, meals: true, messages: true });
   const [requirePinForHome, setRequirePinForHome] = useState(false);
+  const [calendarDays, setCalendarDays] = useState(7);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
@@ -73,8 +74,9 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
     loadCalendarSettings();
     loadMeals();
     loadTodoStatus();
-    api.getSettings().then(({ requirePinForHome, appFeatures }) => {
+    api.getSettings().then(({ requirePinForHome, appFeatures, calendarDays }) => {
       setRequirePinForHome(requirePinForHome);
+      if (calendarDays) setCalendarDays(calendarDays);
       setFeatures(appFeatures);
     }).catch(() => {});
   }, []);
@@ -176,6 +178,16 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
       await api.updateSettings({ requirePinForHome: next });
     } catch {
       setRequirePinForHome(!next);
+    }
+  }
+
+  async function changeCalendarDays(days: number) {
+    const previous = calendarDays;
+    setCalendarDays(days);
+    try {
+      await api.updateSettings({ calendarDays: days });
+    } catch {
+      setCalendarDays(previous);
     }
   }
 
@@ -698,6 +710,19 @@ export function AdminView({ onBack, initialTab = 'settings' }: AdminViewProps) {
                     {t.saveSettings}
                   </button>
                 </div>
+              </div>
+              <div className={`mb-6 p-4 rounded-lg ${sectionBg('purple')}`}>
+                <label className={`block font-semibold mb-1 ${labelText}`}>{t.calendarDaysLabel}</label>
+                <p className={`text-sm mb-3 ${mutedText}`}>{t.calendarDaysDesc}</p>
+                <select
+                  value={calendarDays}
+                  onChange={(e) => changeCalendarDays(Number(e.target.value))}
+                  className={`w-full ${inputClass}`}
+                >
+                  {Array.from({ length: 24 }, (_, i) => i + 7).map((days) => (
+                    <option key={days} value={days}>{t.calendarDaysOption(days)}</option>
+                  ))}
+                </select>
               </div>
             </div>
           )}

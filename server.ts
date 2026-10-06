@@ -345,6 +345,14 @@ app.use('/api/', generalLimiter);
 app.use('/api/auth/', authLimiter);
 
 // ── App settings (public read, auth write) ────────────────────────────────────
+const MIN_CALENDAR_DAYS = 7;
+const MAX_CALENDAR_DAYS = 30;
+
+function getCalendarDays(): number {
+  const value = Number(getSettingStr('calendarDays'));
+  return Number.isInteger(value) && value >= MIN_CALENDAR_DAYS && value <= MAX_CALENDAR_DAYS ? value : MIN_CALENDAR_DAYS;
+}
+
 app.get('/api/settings', (req, res) => {
   try {
     const get = (key: string) => db.prepare('SELECT value FROM app_settings WHERE key = ?').get(key) as any;
@@ -352,6 +360,7 @@ app.get('/api/settings', (req, res) => {
     const featuresRow = get('appFeatures');
     res.json({
       requirePinForHome: pinRow ? JSON.parse(pinRow.value) : false,
+      calendarDays: getCalendarDays(),
       appFeatures: { tasks: true, calendar: true, meals: true, messages: true, ...(featuresRow ? JSON.parse(featuresRow.value) : {}) },
     });
   } catch { res.status(500).json({ error: 'Failed to fetch settings' }); }
@@ -359,11 +368,17 @@ app.get('/api/settings', (req, res) => {
 
 app.put('/api/settings', requireAuth, (req, res) => {
   try {
-    const { requirePinForHome, appFeatures } = req.body;
+    const { requirePinForHome, appFeatures, calendarDays } = req.body;
     const upsert = (key: string, value: unknown) =>
       db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)').run(key, JSON.stringify(value));
     if (typeof requirePinForHome === 'boolean') upsert('requirePinForHome', requirePinForHome);
     if (appFeatures && typeof appFeatures === 'object') upsert('appFeatures', appFeatures);
+    if (calendarDays !== undefined) {
+      if (!Number.isInteger(calendarDays) || calendarDays < MIN_CALENDAR_DAYS || calendarDays > MAX_CALENDAR_DAYS) {
+        return res.status(400).json({ error: 'Invalid calendarDays' });
+      }
+      upsert('calendarDays', calendarDays);
+    }
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed to save settings' }); }
 });
@@ -757,7 +772,9 @@ app.get('/api/calendar-events', async (req, res) => {
     const events = await ical.async.fromURL(settings.ical_url);
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // One extra day of slack for the server's timezone; the client trims to exact local days
+    const windowEnd = new Date(startOfToday);
+    windowEnd.setDate(windowEnd.getDate() + getCalendarDays() + 1);
     const formatDateOnly = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const upcomingEvents = Object.values(events)
       .filter((e: any) => e.type === 'VEVENT')
@@ -779,7 +796,7 @@ app.get('/api/calendar-events', async (req, res) => {
       .filter((event: any) => {
         const eventStart = event.rawStart instanceof Date ? event.rawStart : new Date(event.rawStart);
         const eventEnd = event.end ? new Date(event.end) : eventStart;
-        return (eventStart >= startOfToday || eventEnd >= startOfToday) && eventStart <= sevenDaysFromNow;
+        return (eventStart >= startOfToday || eventEnd >= startOfToday) && eventStart < windowEnd;
       })
       .sort((a: any, b: any) => {
         const aS = a.rawStart instanceof Date ? a.rawStart : new Date(a.rawStart);

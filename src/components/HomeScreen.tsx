@@ -30,6 +30,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     return saved ? JSON.parse(saved) : false;
   });
   const [features, setFeatures] = useState({ tasks: true, calendar: true, meals: true, messages: true });
+  const [calendarDays, setCalendarDays] = useState(7);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [todoStatus, setTodoStatus] = useState<TodoStatus | null>(null);
@@ -48,7 +49,10 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     loadMealPlan();
     loadMessages();
     api.getTodoStatus().then(setTodoStatus).catch(() => {});
-    api.getSettings().then(({ appFeatures }) => setFeatures(f => ({ ...f, ...appFeatures }))).catch(() => {});
+    api.getSettings().then(({ appFeatures, calendarDays }) => {
+      setFeatures(f => ({ ...f, ...appFeatures }));
+      if (calendarDays) setCalendarDays(calendarDays);
+    }).catch(() => {});
 
     const refreshInterval = setInterval(() => {
       loadChildrenWithProgress();
@@ -269,7 +273,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
       const day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
       if (day < today) day.setTime(today.getTime());
       const lastDay = new Date(today);
-      lastDay.setDate(lastDay.getDate() + 7);
+      lastDay.setDate(lastDay.getDate() + calendarDays - 1);
       while (day <= lastDay) {
         const dayStart = new Date(day);
         const dayEnd = new Date(day);

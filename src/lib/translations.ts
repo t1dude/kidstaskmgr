@@ -80,6 +80,9 @@ export interface Translations {
   icalHowTo: string;
   icalGoogleHelp: string;
   icalOutlookHelp: string;
+  calendarDaysLabel: string;
+  calendarDaysDesc: string;
+  calendarDaysOption: (days: number) => string;
   saveSettings: string;
   addMealSection: string;
   mealPlaceholder: string;
@@ -223,6 +226,9 @@ export const translations: Record<Lang, Translations> = {
     icalHowTo: 'Slik finner du iCal-adressen:',
     icalGoogleHelp: 'Google Calendar: Kalenderinnstillinger → Integrer kalender → Hemmelig adresse i iCal-format',
     icalOutlookHelp: 'Outlook: Kalenderinnstillinger → Delte kalendere → Publiser en kalender → ICS-format',
+    calendarDaysLabel: 'Antall dager i kalenderen',
+    calendarDaysDesc: 'Hvor mange dager fremover startsiden viser, inkludert i dag.',
+    calendarDaysOption: (days) => `${days} dager`,
     saveSettings: 'Lagre innstillinger',
     addMealSection: 'Legg til middag',
     mealPlaceholder: 'F.eks. Taco, Pasta bolognese...',
@@ -385,6 +391,9 @@ export const translations: Record<Lang, Translations> = {
     icalHowTo: 'How to find the iCal address:',
     icalGoogleHelp: 'Google Calendar: Calendar settings → Integrate calendar → Secret address in iCal format',
     icalOutlookHelp: 'Outlook: Calendar settings → Shared calendars → Publish a calendar → ICS format',
+    calendarDaysLabel: 'Days shown in the calendar',
+    calendarDaysDesc: 'How many days ahead the home screen shows, including today.',
+    calendarDaysOption: (days) => `${days} days`,
     saveSettings: 'Save settings',
     addMealSection: 'Add dinner',
     mealPlaceholder: 'E.g. Tacos, Pasta bolognese...',
