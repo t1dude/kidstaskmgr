@@ -301,7 +301,7 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     return `${startsBefore ? '…' : fmt(start)} - ${endsAfter ? '…' : fmt(end)}`;
   }
 
-  const calendarDays = groupEventsByDay(calendarEvents);
+  const calendarGroups = groupEventsByDay(calendarEvents);
 
   return (
     <div className={`min-h-screen p-4 transition-colors duration-300 ${
@@ -456,9 +456,9 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 <RefreshCw className={`w-5 h-5 ${calendarRefreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
-            {calendarDays.length > 0 ? (
+            {calendarGroups.length > 0 ? (
               <div className="space-y-6">
-                {calendarDays.map(({ day, entries }) => (
+                {calendarGroups.map(({ day, entries }) => (
                   <div key={day.getTime()} className="space-y-2">
                     <h3 className={`text-lg font-bold capitalize border-b-2 pb-2 ${
                       darkMode ? 'text-gray-200 border-blue-500' : 'text-gray-700 border-blue-200'
