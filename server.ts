@@ -219,6 +219,31 @@ function getCurrentWeekStart(): string {
   return monday;
 }
 
+// Completions written by clients that computed the week from the date (old
+// cached bundles) end up under other week_start_date values. Every row belongs
+// to the current period since reset-week clears the table, so fold them in.
+function consolidateCompletions() {
+  const week = getCurrentWeekStart();
+  const strays = db.prepare('SELECT * FROM task_completions WHERE week_start_date != ?').all(week) as
+    { id: string; child_id: string; task_id: string; completion_count: number }[];
+  if (strays.length === 0) return;
+  const now = new Date().toISOString();
+  db.transaction(() => {
+    for (const row of strays) {
+      const target = db.prepare('SELECT id FROM task_completions WHERE child_id = ? AND task_id = ? AND week_start_date = ?')
+        .get(row.child_id, row.task_id, week) as { id: string } | undefined;
+      if (target) {
+        db.prepare('UPDATE task_completions SET completion_count = MIN(completion_count + ?, 999), updated_at = ? WHERE id = ?')
+          .run(row.completion_count, now, target.id);
+        db.prepare('DELETE FROM task_completions WHERE id = ?').run(row.id);
+      } else {
+        db.prepare('UPDATE task_completions SET week_start_date = ?, updated_at = ? WHERE id = ?').run(week, now, row.id);
+      }
+    }
+  })();
+}
+consolidateCompletions();
+
 // ── Admin PIN (DB-backed, set up on first run) ─────────────────────────────────
 function hashPin(pin: string, salt: string): string {
   return scryptSync(pin, salt, 64).toString('hex');
@@ -483,18 +508,19 @@ app.get('/api/current-week', (req, res) => {
 });
 
 // ── Task completions (public – used by children) ──────────────────────────────
+// The week in the URL and body is ignored; the server's stored week is authoritative.
 app.get('/api/task-completions/:childId/:weekStart', (req, res) => {
   try {
-    res.json(db.prepare('SELECT * FROM task_completions WHERE child_id = ? AND week_start_date >= ?')
-      .all(req.params.childId, req.params.weekStart));
+    res.json(db.prepare('SELECT * FROM task_completions WHERE child_id = ? AND week_start_date = ?')
+      .all(req.params.childId, getCurrentWeekStart()));
   } catch { res.status(500).json({ error: 'Failed to fetch completions' }); }
 });
 
 app.post('/api/task-completions', (req, res) => {
   try {
-    const { child_id, task_id, completion_count, week_start_date } = req.body;
-    if (!child_id || !task_id || !week_start_date) return res.status(400).json({ error: 'Missing required fields' });
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(week_start_date)) return res.status(400).json({ error: 'Invalid week_start_date' });
+    const { child_id, task_id, completion_count } = req.body;
+    if (!child_id || !task_id) return res.status(400).json({ error: 'Missing required fields' });
+    const week_start_date = getCurrentWeekStart();
     if (!Number.isInteger(completion_count) || completion_count < 0 || completion_count > 999) return res.status(400).json({ error: 'Invalid completion_count' });
     const existing = db.prepare('SELECT * FROM task_completions WHERE child_id = ? AND task_id = ? AND week_start_date = ?')
       .get(child_id, task_id, week_start_date);
