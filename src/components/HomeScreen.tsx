@@ -15,6 +15,8 @@ interface HomeScreenProps {
   onAdminClick: (tab?: 'settings' | 'tasks' | 'children' | 'calendar' | 'meals') => void;
 }
 
+interface DayEntry { event: CalendarEvent; dayStart: Date; dayEnd: Date }
+
 export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
   const { t, lang, setLang } = useLanguage();
   const [children, setChildren] = useState<ChildWithProgress[]>([]);
@@ -234,8 +236,16 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     });
   }
 
-  function getDayLabel(dateString: string): string {
-    const date = new Date(dateString);
+  // Date-only strings (all-day events) are parsed as local midnight, not UTC
+  function parseEventDate(value: string): Date {
+    if (value.length === 10) {
+      const [y, m, d] = value.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    return new Date(value);
+  }
+
+  function getDayLabel(date: Date): string {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -248,24 +258,46 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
     return t.formatDate(weekday, date.getDate(), month);
   }
 
-  function groupEventsByDay(events: CalendarEvent[]): Record<string, CalendarEvent[]> {
-    const grouped: Record<string, CalendarEvent[]> = {};
+  // Multi-day events are listed on every day they cover, from today onwards
+  function groupEventsByDay(events: CalendarEvent[]): { day: Date; entries: DayEntry[] }[] {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const grouped = new Map<number, DayEntry[]>();
     events.forEach((event) => {
-      const dateKey = new Date(event.start).toDateString();
-      if (!grouped[dateKey]) grouped[dateKey] = [];
-      grouped[dateKey].push(event);
+      const start = parseEventDate(event.start);
+      const end = event.end ? parseEventDate(event.end) : start;
+      const day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      if (day < today) day.setTime(today.getTime());
+      const lastDay = new Date(today);
+      lastDay.setDate(lastDay.getDate() + 7);
+      while (day <= lastDay) {
+        const dayStart = new Date(day);
+        const dayEnd = new Date(day);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        const overlaps = start < dayEnd && (end > dayStart || (end.getTime() === start.getTime() && start >= dayStart));
+        if (!overlaps) break;
+        if (!grouped.has(dayStart.getTime())) grouped.set(dayStart.getTime(), []);
+        grouped.get(dayStart.getTime())!.push({ event, dayStart, dayEnd });
+        day.setDate(day.getDate() + 1);
+      }
     });
-    return grouped;
+    return [...grouped.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([time, entries]) => ({ day: new Date(time), entries }));
   }
 
-  function formatEventTime(startString: string, endString: string): string {
-    if (startString.length === 10) return t.allDay;
-    const startDate = new Date(startString);
-    const endDate = new Date(endString);
-    const startTime = startDate.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-    const endTime = endDate.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-    return `${startTime} - ${endTime}`;
+  function formatEventTime({ event, dayStart, dayEnd }: DayEntry): string {
+    if (event.start.length === 10) return t.allDay;
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    const startsBefore = start < dayStart;
+    const endsAfter = end > dayEnd;
+    if (startsBefore && endsAfter) return t.allDay;
+    const fmt = (d: Date) => d.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+    return `${startsBefore ? '…' : fmt(start)} - ${endsAfter ? '…' : fmt(end)}`;
   }
+
+  const calendarDays = groupEventsByDay(calendarEvents);
 
   return (
     <div className={`min-h-screen p-4 transition-colors duration-300 ${
@@ -420,33 +452,33 @@ export function HomeScreen({ onSelectChild, onAdminClick }: HomeScreenProps) {
                 <RefreshCw className={`w-5 h-5 ${calendarRefreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
-            {calendarEvents.length > 0 ? (
+            {calendarDays.length > 0 ? (
               <div className="space-y-6">
-                {Object.entries(groupEventsByDay(calendarEvents)).map(([dateKey, events]) => (
-                  <div key={dateKey} className="space-y-2">
+                {calendarDays.map(({ day, entries }) => (
+                  <div key={day.getTime()} className="space-y-2">
                     <h3 className={`text-lg font-bold capitalize border-b-2 pb-2 ${
                       darkMode ? 'text-gray-200 border-blue-500' : 'text-gray-700 border-blue-200'
                     }`}>
-                      {getDayLabel(events[0].start)}
+                      {getDayLabel(day)}
                     </h3>
                     <div className="space-y-2">
-                      {events.map((event) => (
+                      {entries.map((entry) => (
                         <div
-                          key={event.id}
+                          key={entry.event.id}
                           className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
                             darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'
                           }`}
                         >
                           <div className="flex-1">
                             <h4 className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                              {event.summary}
+                              {entry.event.summary}
                             </h4>
                             <div className={`text-sm mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                              <span>{formatEventTime(event.start, event.end)}</span>
+                              <span>{formatEventTime(entry)}</span>
                             </div>
-                            {event.location && (
+                            {entry.event.location && (
                               <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                📍 {event.location}
+                                📍 {entry.event.location}
                               </div>
                             )}
                           </div>
